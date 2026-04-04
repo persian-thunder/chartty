@@ -1,20 +1,9 @@
-# compiled artifacts
-renderer
-shader.so
-shader.so.tmp
-shader_full.c
-shader_error.txt
-
-# runtime state (hot-reloaded files written during a session)
-chars.txt
-palette.txt
-
 # python
 __pycache__/
 *.pyc
 
-# temp files written by renderer
-/tmp/chartty_*
+# generated at runtime — not needed in repo
+config/shader.py
 
 # tooling
 .claude/
