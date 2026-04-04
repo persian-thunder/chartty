@@ -77,6 +77,7 @@ exec \"$ROOT/launch.sh\" \"\$@\"
 "
 
 install_cmd() {
+    rm -f "$1/$CMD"
     printf '%s' "$WRAPPER" > "$1/$CMD"
     chmod +x "$1/$CMD"
     echo -e "  ${GREEN}ok${RESET}   $1/$CMD"
