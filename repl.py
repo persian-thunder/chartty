@@ -1,41 +1,40 @@
-import os, re, readline, subprocess, tempfile
+import os, readline, subprocess, tempfile
 
-DIR         = os.path.dirname(os.path.abspath(__file__))
-SHADER_BODY = os.path.join(DIR, "shader_body.c")
-COMPILE     = os.path.join(DIR, "compile_shader.sh")
-CHARS_FILE  = os.path.join(DIR, "chars.txt")
-PAL_FILE    = os.path.join(DIR, "palette.txt")
+DIR        = os.path.dirname(os.path.abspath(__file__))
+SHADER     = os.path.join(DIR, "shader.py")
+CHARS_FILE = os.path.join(DIR, "chars.txt")
+PAL_FILE   = os.path.join(DIR, "palette.txt")
 
-PALETTES = ["rainbow", "fire", "plasma", "ice", "green", "gold", "rose", "neon", "mono"]
+PALETTES = ["rainbow", "fire", "plasma", "ice", "green", "gold", "rose", "neon", "mono", "fiesta"]
 
 PRESETS = {
-    "default": " \u00b7:\u2502\u2592\u2588",
+    "default": " ·:│▒█",
     "ascii":   " .:-=+*#%@",
-    "block":   " \u2591\u2592\u2593\u2588",
+    "block":   " ░▒▓█",
     "binary":  " 01",
     "slash":   " /|\\-",
-    "dot":     " .:\u00b7\u2022\u25cf",
-    "zen":     " \u2801\u2803\u2807\u2847\u28c7\u28e7\u28f7\u28ff",
-    "kawaii":  " \u208a\u02da\u2299\u2665\u2727\u2726",
+    "dot":     " .:·•●",
+    "zen":     " ⠁⠃⠇⠇⣇⣧⣷⣿",
+    "kawaii":  " ₊˚⊙♥✧✦",
     "dense":   " .'`^\",;:Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
-    "shade":   " \u00b7\u2219\u25cb\u25ce\u25cf",
-    "cross":   " \u254c\u254d\u2550\u256a\u256c",
-    "circuit": " \u00b7\u2500\u2502\u253c\u256c",
+    "shade":   " ·∙○◎●",
+    "cross":   " ╌╍═╪╬",
+    "circuit": " ·─│┼╬",
     "noise":   " .,;!?*#@",
-    "wave":    " ~\u2248\u224b",
-    "heart":   " \u2661\u2665",
-    "star":    " \u00b7\u2726\u2727\u2605",
-    "braille": " \u2802\u2806\u2816\u2836\u2837\u283f",
-    "math":    " \u2218\u2219\u25e6\u25cb\u25cf",
-    "box":     " \u2596\u2597\u2598\u2599\u259a\u259b\u259c\u259d\u259e\u259f\u2588",
-    "pixel":   " \u258f\u258e\u258d\u258c\u258b\u258a\u2589\u2588",
-    "tri":     " \u25b4\u25b5\u25b3\u25b2",
-    "diamond": " \u00b7\u25c7\u25c6",
-    "fire2":   " .,*#@\u2591\u2592\u2593\u2588",
-    "matrix":  " \uff66\uff67\uff68\uff69\uff6a\uff6b\uff6c\uff6d\uff6e\uff6f\uff70\uff71\uff72\uff73\uff74\uff75",
+    "wave":    " ~≈≋",
+    "heart":   " ♡♥",
+    "star":    " ·✦✧★",
+    "braille": " ⠂⠆⠖⠶⠷⠿",
+    "math":    " ∘∙◦○●",
+    "box":     " ▖▗▘▙▚▛▜▝▞▟█",
+    "pixel":   " ▏▎▍▌▋▊▉█",
+    "tri":     " ▴▵△▲",
+    "diamond": " ·◇◆",
+    "fire2":   " .,*#@░▒▓█",
+    "matrix":  " ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵ",
     "hex":     " 0123456789ABCDEF",
     "morse":   " .-",
-    "thick":   " \u2592\u2588",
+    "thick":   " ▒█",
 }
 
 DIM   = "\033[2m"
@@ -43,99 +42,92 @@ GREEN = "\033[32m"
 RED   = "\033[31m"
 RESET = "\033[0m"
 
-# ── Python → C auto-translation ───────────────────────────────────────────────
-_MATH_FNS = [
-    "sin","cos","tan","asin","acos","atan","atan2",
-    "sqrt","exp","log","log2","log10","pow",
-    "fabs","ceil","floor","hypot","sinh","cosh","tanh","fmod",
-]
+BOILERPLATE_TOP = """def value(x, y, t, cols, rows):
+    cx = x - cols / 2
+    cy = y - rows / 2
+    v = 0.0
+"""
 
-def py_to_c(line):
-    """Best-effort translate Python math expression to C.
+BOILERPLATE_BOT = """    c = v
+    return (v, c)
+"""
 
-    Handles:
-      math.XXX(  →  XXX(
-      math.pi    →  M_PI
-      math.e     →  M_E
-      abs(       →  fabs(
-      trailing semicolon added if missing
-    """
-    for fn in _MATH_FNS:
-        line = line.replace(f"math.{fn}(", f"{fn}(")
-    line = line.replace("math.pi",  "M_PI")
-    line = line.replace("math.e",   "M_E")
-    line = line.replace("math.inf", "INFINITY")
-    line = re.sub(r"\babs\(", "fabs(", line)
-    stripped = line.rstrip()
-    if stripped and not stripped.endswith((";", "{", "}", "//", "*/")):
-        line = stripped + ";"
-    return line
-
-# ── shader file I/O ───────────────────────────────────────────────────────────
-lines = ["v = sin(cos(t + cx) * sin(cx + t));"]   # stored as C
-
-def write_shader():
-    with open(SHADER_BODY, "w") as f:
-        for l in lines:
-            f.write("    " + l + "\n")
-
-def try_compile():
-    """Returns (ok: bool, short_error: str)."""
-    r = subprocess.run(
-        ["bash", COMPILE],
-        capture_output=True, text=True
-    )
-    if r.returncode == 0:
-        return True, ""
-    # Read compiler output from shader_error.txt (written by compile_shader.sh)
-    err_path = os.path.join(DIR, "shader_error.txt")
-    try:
-        with open(err_path) as f:
-            raw = f.read().strip()
-    except OSError:
-        raw = (r.stderr or r.stdout or "compilation failed").strip()
-    # Surface the most useful line (first error line, skip the file header)
-    for ln in raw.splitlines():
-        ln = ln.strip()
-        if ln and ("error" in ln.lower() or "warning" in ln.lower()):
-            return False, ln[:100]
-    return False, raw.splitlines()[0][:100] if raw else "compilation failed"
-
-def show():
-    print(DIM + "\u2500" * 36 + RESET)
-    for i, l in enumerate(lines):
-        print(f"{DIM}{i:2}{RESET}  {l}")
-    print(DIM + "\u2500" * 36 + RESET)
-
-def set_chars(s):
-    with open(CHARS_FILE, "w") as f:
-        f.write(s)
-    print(f"{DIM}  chars \u2192 {s}{RESET}")
-
-def set_palette(name):
-    with open(PAL_FILE, "w") as f:
-        f.write(name)
-    print(f"{DIM}  palette \u2192 {name}{RESET}")
-
-# ── examples (C syntax; py_to_c-compatible Python math also accepted live) ───
+# ── examples (Python syntax) ──────────────────────────────────────────────────
 EXAMPLES = [
-    ("moiré wormhole",   ["v = sin(sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0);",
-                          "v *= sin(atan2(cy, cx) * 7.0 + t);"]),
-    ("acid grid",        ["v = sin(x / 3.0 + sin(y / 4.0 + t));",
-                          "v += sin(y / 3.0 + sin(x / 4.0 - t));"]),
-    ("breathing spiral", ["v = sin(atan2(cy, cx) * 5.0 - sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0);"]),
-    ("zoom tunnel",      ["double r = sqrt(cx*cx + cy*cy) + 0.001;",
-                          "v = sin(10.0 / r - t * 4.0) * sin(atan2(cy, cx) * 3.0);"]),
-    ("glitch ripple",    ["v = sin(x / 4.0 + sin(t + y / 20.0) * 10.0);",
-                          "v += sin(y / 2.0 - t * 2.0) * 0.5;",
-                          "v = sin(v * M_PI * 2.0);"]),
+    ("moiré wormhole",   ["v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)",
+                          "v *= math.sin(math.atan2(cy, cx) * 7.0 + t)"]),
+    ("acid grid",        ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
+    ("breathing spiral", ["v = math.sin(math.atan2(cy, cx) * 5.0 - math.sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0)"]),
+    ("zoom tunnel",      ["r = math.sqrt(cx*cx + cy*cy) + 0.001",
+                          "v = math.sin(10.0 / r - t * 4.0) * math.sin(math.atan2(cy, cx) * 3.0)"]),
+    ("glitch ripple",    ["v = math.sin(x / 4.0 + math.sin(t + y / 20.0) * 10.0)",
+                          "v += math.sin(y / 2.0 - t * 2.0) * 0.5",
+                          "v = math.sin(v * math.pi * 2.0)"]),
 ]
 
 SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4}
 
+# ── stored lines (Python expressions) ────────────────────────────────────────
+lines = ["v = math.sin(math.cos(t + cx) * math.sin(cx + t))"]
+
+def write_shader():
+    body = "".join("    " + l + "\n" for l in lines)
+    with open(SHADER, "w") as f:
+        f.write(BOILERPLATE_TOP + body + BOILERPLATE_BOT)
+
+def try_compile():
+    """Validate shader by exec-ing it with numpy arrays. Returns (ok, error_str)."""
+    import types
+    try:
+        import numpy as np
+        _math_np = types.SimpleNamespace(
+            sin=np.sin, cos=np.cos, tan=np.tan,
+            asin=np.arcsin, acos=np.arccos, atan=np.arctan, atan2=np.arctan2,
+            sqrt=np.sqrt, exp=np.exp, log=np.log, log2=np.log2, log10=np.log10,
+            pow=np.power, fabs=np.fabs, abs=np.fabs,
+            floor=np.floor, ceil=np.ceil,
+            hypot=np.hypot, sinh=np.sinh, cosh=np.cosh, tanh=np.tanh,
+            fmod=np.fmod, pi=np.pi, e=np.e, inf=np.inf,
+        )
+        ns = {"math": _math_np}
+        with open(SHADER) as f:
+            exec(compile(f.read(), SHADER, "exec"), ns)
+        fn = ns["value"]
+        X, Y = np.meshgrid(np.arange(80, dtype=float), np.arange(24, dtype=float))
+        fn(X, Y, 0.0, 80, 24)
+    except ImportError:
+        import math as _math
+        ns = {"math": _math}
+        try:
+            with open(SHADER) as f:
+                exec(compile(f.read(), SHADER, "exec"), ns)
+            ns["value"](0, 0, 0.0, 80, 24)
+        except Exception as e:
+            return False, str(e)[:100]
+    except Exception as e:
+        return False, str(e)[:100]
+    return True, ""
+
+def show():
+    print(DIM + "─" * 36 + RESET)
+    for i, l in enumerate(lines):
+        print(f"{DIM}{i:2}{RESET}  {l}")
+    print(DIM + "─" * 36 + RESET)
+
+def set_chars(s):
+    with open(CHARS_FILE, "w") as f:
+        f.write(s)
+    print(f"{DIM}  chars → {s}{RESET}")
+
+def set_palette(name):
+    with open(PAL_FILE, "w") as f:
+        f.write(name)
+    print(f"{DIM}  palette → {name}{RESET}")
+
 def open_editor():
     global lines
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".c", delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write("\n".join(lines))
         tmp = f.name
     editor = os.environ.get("EDITOR", "nano")
@@ -144,7 +136,7 @@ def open_editor():
         raw = f.read()
     os.unlink(tmp)
     new_lines = [l.rstrip() for l in raw.splitlines()
-                 if l.strip() and not l.strip().startswith("//")]
+                 if l.strip() and not l.strip().startswith("#")]
     if new_lines:
         old_lines = list(lines)
         lines = new_lines
@@ -158,10 +150,10 @@ def open_editor():
             try_compile()
             print(f"{RED}  error: {err}{RESET}")
     else:
-        print(f"{RED}  empty \u2014 keeping previous{RESET}")
+        print(f"{RED}  empty — keeping previous{RESET}")
 
 def show_examples():
-    print(f"\n{DIM}\u2500\u2500 examples \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500{RESET}")
+    print(f"\n{DIM}── examples ───────────────────────────────────{RESET}")
     for name, ex_lines in EXAMPLES:
         print(f"\n  {name}")
         for l in ex_lines:
@@ -169,19 +161,16 @@ def show_examples():
 
 # ── startup ───────────────────────────────────────────────────────────────────
 write_shader()
-print(f"{DIM}  compiling initial shader...{RESET}", end="", flush=True)
-ok, _ = try_compile()
-print(f" {'ok' if ok else 'failed'}{RESET}")
 
 print()
-print("  \u02d6\u207a\u200a\u2027\u208a\u02da\u2665\u02da\u208a\u2027\u200a\u207a\u02d6 CHARTTY LIVE-CODE ASCII RENDERER \u02d6\u207a\u200a\u2027\u208a\u02da\u2665\u02da\u208a\u2027\u200a\u207a\u02d6  ")
+print("  ˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖  ")
 print()
 print("  Shader variables")
 print(f"  {DIM}(x,y)   pixel position   (cx,cy) = centered{RESET}")
 print(f"  {DIM}(t)     time             (cols,rows) terminal size{RESET}")
 print(f"  {DIM}(v)     brightness 0..1  (c) colour 0..1 (defaults to v){RESET}")
 print()
-print("  Type C expressions  (math.sin / math.cos auto-translated)")
+print("  Type Python expressions  (math.sin, math.cos, etc.)")
 print()
 print("  Commands")
 print(f"  {DIM}<enter>  = add line          undo    = remove last line{RESET}")
@@ -202,15 +191,13 @@ while True:
     if not raw:
         continue
     elif raw == "clear":
-        lines = ["v = 0.0;"]
+        lines = ["v = 0.0"]
         write_shader()
-        try_compile()
         show()
     elif raw == "undo":
         if len(lines) > 1:
             lines.pop()
         write_shader()
-        try_compile()
         show()
     elif raw == "list":
         show()
@@ -227,7 +214,7 @@ while True:
             for p in PALETTES:
                 print(f"{DIM}    palette {p}{RESET}")
         else:
-            print(f"{RED}  unknown palette \u2014 try: {' '.join(PALETTES)}{RESET}")
+            print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
     elif raw.startswith("chars"):
         arg = raw[5:].strip()
         if arg in PRESETS:
@@ -249,7 +236,7 @@ while True:
                     print(f"{DIM}  removed: {removed}{RESET}")
                     show()
                 else:
-                    lines.insert(idx, removed)  # revert
+                    lines.insert(idx, removed)
                     write_shader()
                     try_compile()
                     print(f"{RED}  error after del: {err}{RESET}")
@@ -268,16 +255,13 @@ while True:
         else:
             print(f"{RED}  {err}{RESET}")
     else:
-        # Translate Python math syntax → C, add semicolon
-        c_line = py_to_c(raw)
-        lines.append(c_line)
+        lines.append(raw)
         write_shader()
         ok, err = try_compile()
         if ok:
-            print(f"{DIM}  \u2713{RESET}")
+            print(f"{DIM}  ✓{RESET}")
             show()
         else:
             lines.pop()
             write_shader()
-            try_compile()   # restore previous valid shader
             print(f"{RED}  error: {err}{RESET}")

@@ -1,103 +1,78 @@
-# chartty
+# chartty (𖦹﹏𖦹;)
 
-live-code ASCII animations in your terminal. write math, watch it render.
+Live-code ASCII art in your terminal. Trigonomatry is your best friend here (｡•̀ᴗ-)✧ 
 
 ```
-v = sin(sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0);
-v *= sin(atan2(cy, cx) * 7.0 + t);
+v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)
+v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 ```
-
-the renderer is written in C — shaders compile to native code via `dlopen` hot-swap, so there's no lag even at full terminal size.
 
 ---
 
-## install
-
-**dependencies:** `tmux`, `cc` (clang or gcc), `python3`
+## Installation
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/chartty
 cd chartty
-./install.sh
-```
-
-then run:
-
-```bash
-ascii-c
-```
-
-to uninstall:
-
-```bash
-./uninstall.sh
+bash install.sh
 ```
 
 ---
 
-## usage
+## Usage
 
-the window splits into two panes. the left pane renders. the right pane is your editor.
+`chartty` opens two panes. Left is renderer, right is live editor.
 
-type expressions and hit enter. the shader recompiles and hot-swaps instantly.
+Type  trigonometric functions, press enter, watch magic happen in real-time.
 
-**available variables**
 
-| variable | meaning |
+| variable | purpose |
 |---|---|
 | `x`, `y` | pixel position (top-left is 0,0) |
-| `cx`, `cy` | centered coords (`x - cols/2`, `y - rows/2`) |
-| `t` | time, increments each frame |
+| `cx`, `cy` | centered (`x - cols/2`, `y - rows/2`) |
+| `t` | time in seconds |
 | `cols`, `rows` | terminal dimensions |
-| `v` | brightness output (0..1) |
-| `c` | colour index (0..1, defaults to `v`) |
+| `v` | brightness 0..1 |
+| `c` | color 0..1 (defaults to `v`) |
 
-all standard C math functions available: `sin`, `cos`, `sqrt`, `atan2`, `pow`, `fabs`, `M_PI` ...
-
-python-style math also works — `math.sin(` is auto-translated to `sin(`.
+use anything from `math`, `math.sin`, `math.cos`, `math.sqrt`, `math.pi`, `math.atan2` ...
 
 **commands**
 
 ```
-undo          remove last line
-clear         reset to blank
-list          show current code
-del <n>       delete line n
-edit          open in $EDITOR
-palette       list palettes
-palette fire  switch palette
-chars ascii   switch character set
-examples      show preset shaders
-wormhole      load moiré wormhole preset
-acid          load acid grid preset
-spiral        load breathing spiral preset
-tunnel        load zoom tunnel preset
-ripple        load glitch ripple preset
+undo            remove last line
+clear           reset to blank
+list            show current code
+del <n>         delete line n
+edit            open in $EDITOR
+examples        show built-in presets
+wormhole        moiré wormhole
+acid            acid grid
+spiral          breathing spiral
+tunnel          zoom tunnel
+ripple          glitch ripple
+palette         list palettes
+palette fire    switch palette
+chars kawaii     switch character set
 ```
 
-**palettes:** `rainbow` `fire` `plasma` `ice` `green` `gold` `rose` `neon` `mono`
+**palettes:** `rainbow` `fire` `plasma` `ice` `green` `gold` `rose` `fiesta` `mono`
 
 ---
 
-## how it works
+## How does it work ( •᷄‎ࡇ•᷅ )
+
+The renderer calls your shader function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid in one  — so the math runs over the entire pixel grid in one vectorised C operation instead of a Python loop. Frames build at ~60fps.
 
 ```
-repl.py          →   shader_body.c   →   compile_shader.sh
-(you type here)      (your C body)       (cc -O2 -dynamiclib)
-                                              ↓
-                                         shader.so
-                                              ↓
-                                     renderer  (dlopen hot-swap)
-                                     one write() per frame
+repl.py        →   shader.py   →   renderer.py
+(you type)         (your fn)       (numpy + tmux pane)
 ```
-
-shaders are real compiled C. each time you add a line, the REPL wraps your code in a function template, compiles it to a shared library, and the renderer `dlopen`s it. no interpreter overhead in the render loop.
 
 ---
 
-## requirements
+## Requirements
 
 - macOS or Linux
-- clang or gcc
-- tmux
-- python3 (for the REPL only — the renderer itself is pure C)
+- Python 3
+- tmux (installed automatically by install.sh)

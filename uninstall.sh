@@ -1,7 +1,7 @@
-#!/bin/bash
-# uninstall.sh — removes the ascii-c command
+#!/usr/bin/env bash
+# uninstall.sh — removes the chartty command
 
-CMD="ascii-c"
+CMD="chartty"
 LOCATIONS=("/usr/local/bin/$CMD" "$HOME/.local/bin/$CMD")
 FOUND=0
 
@@ -13,4 +13,4 @@ for loc in "${LOCATIONS[@]}"; do
     fi
 done
 
-[ "$FOUND" = "0" ] && echo "ascii-c not found in /usr/local/bin or ~/.local/bin"
+[ "$FOUND" = "0" ] && echo "chartty not found in /usr/local/bin or ~/.local/bin"
