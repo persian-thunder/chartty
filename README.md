@@ -1,6 +1,6 @@
 # chartty (𖦹﹏𖦹;)
 
-Live-code ASCII art in your terminal. Trigonomatry is your best friend here (｡•̀ᴗ-)✧ 
+Live-code ASCII  renderer in your terminal. Trigonomatry is your best friend here (｡•̀ᴗ-)✧ 
 
 ```
 v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)
@@ -12,7 +12,6 @@ v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/chartty
 cd chartty
 bash install.sh
 ```
@@ -60,9 +59,10 @@ chars kawaii     switch character set
 
 ---
 
+
 ## How does it work ( •᷄‎ࡇ•᷅ )
 
-The renderer calls your shader function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid in one  — so the math runs over the entire pixel grid in one vectorised C operation instead of a Python loop. Frames build at ~60fps.
+The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid in one  — so the math runs over the entire pixel grid in one vectorised C operation instead of a Python loop. Frames build at ~60fps.
 
 ```
 repl.py        →   shader.py   →   renderer.py
