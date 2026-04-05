@@ -3,10 +3,21 @@ DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
 SESSION="chartty"
 PYTHON="$DIR/.venv/bin/python3"
 
-tmux kill-session -t $SESSION 2>/dev/null
+# Restore terminal state in case a previous tmux session left it in raw mode
+stty sane 2>/dev/null || true
 
-tmux new-session  -d -s $SESSION             "$PYTHON $DIR/src/renderer.py"
-sleep 0.3
-tmux split-window    -h -p 35 -t $SESSION    "$PYTHON $DIR/src/repl.py"
+# Kill any lingering session and wait for it to fully die before starting fresh
+tmux kill-session -t "$SESSION" 2>/dev/null
+sleep 0.15
 
-tmux attach -t $SESSION
+tmux new-session -d -s "$SESSION" "$PYTHON $DIR/src/renderer.py"
+
+# Wait until the session is confirmed alive instead of a fixed sleep
+for i in $(seq 1 40); do
+    tmux has-session -t "$SESSION" 2>/dev/null && break
+    sleep 0.05
+done
+
+tmux split-window -h -p 35 -t "$SESSION" "$PYTHON $DIR/src/repl.py"
+
+exec tmux attach -t "$SESSION"
