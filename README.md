@@ -62,7 +62,7 @@ chars kawaii     switch character set
 
 ## How does it work ( •᷄‎ࡇ•᷅ )
 
-The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid in one  — so the math runs over the entire pixel grid in one vectorised C operation instead of a Python loop. Frames build at ~60fps.
+The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame. Frames build at ~60fps.
 
 ```
 repl.py        →   shader.py   →   renderer.py

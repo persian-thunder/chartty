@@ -8,6 +8,3 @@ config/shader.py
 # tooling
 .claude/
 
-# .txt 
-config/chars.txt
-config/palette.txt
