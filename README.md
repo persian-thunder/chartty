@@ -9,7 +9,7 @@ v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 
 ---
 
-## Installation
+## Installation ദ്ദി ˉ꒳ˉ )✧
 
 ```bash
 cd chartty
@@ -18,14 +18,14 @@ bash install.sh
 
 ---
 
-## Usage
+## Usage ✎ᝰ.ᐟ⋆⑅˚₊
 
 `chartty` opens two panes. Left is renderer, right is live editor.
 
 Type  trigonometric functions, press enter, watch magic happen in real-time.
 
 
-| variable | purpose |
+| Variable | Purpose |
 |---|---|
 | `x`, `y` | pixel position (top-left is 0,0) |
 | `cx`, `cy` | centered (`x - cols/2`, `y - rows/2`) |
@@ -36,7 +36,7 @@ Type  trigonometric functions, press enter, watch magic happen in real-time.
 
 use anything from `math`, `math.sin`, `math.cos`, `math.sqrt`, `math.pi`, `math.atan2` ...
 
-**commands**
+**Commands**
 
 ```
 undo            remove last line
@@ -71,7 +71,7 @@ repl.py        →   shader.py   →   renderer.py
 
 ---
 
-## Requirements
+## Requirements ‧₊ ᵎᵎ 🍒 ⋅ ˚✮
 
 - macOS or Linux
 - Python 3
