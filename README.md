@@ -7,7 +7,6 @@ v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)
 v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 ```
 
----
 
 ## Installation ദ്ദി ˉ꒳ˉ )✧
 
@@ -16,7 +15,7 @@ cd chartty
 bash install.sh
 ```
 
----
+
 
 ## Usage ✎ᝰ.ᐟ⋆⑅˚₊
 
@@ -57,7 +56,6 @@ chars kawaii     switch character set
 
 **palettes:** `rainbow` `fire` `plasma` `ice` `green` `gold` `rose` `fiesta` `mono`
 
----
 
 
 ## How does it work ( •᷄‎ࡇ•᷅ )
@@ -69,7 +67,6 @@ repl.py        →   shader.py   →   renderer.py
 (you type)         (your fn)       (numpy + tmux pane)
 ```
 
----
 
 ## Requirements ‧₊ ᵎᵎ 🍒 ⋅ ˚✮
 
