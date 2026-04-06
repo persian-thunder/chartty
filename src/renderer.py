@@ -170,84 +170,85 @@ err      = None
 
 _refresh_lut_chars()
 
-sys.stdout.write(HIDE + CLEAR)
-sys.stdout.flush()
+sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
+sys.stdout.buffer.flush()
 
 start_time = time.monotonic()
 FRAME_TIME = 1.0 / 30.0   # 30 fps — halves pty output; screen recorders add rendering overhead
 POLL_EVERY = 3             # check config files every N frames (~10 Hz)
 frame_count = 0
 
+try:
+    while True:
+        frame_start = time.monotonic()
+        t = frame_start - start_time
 
-while True:
-    frame_start = time.monotonic()
-    t = frame_start - start_time
+        if frame_count % POLL_EVERY == 0:
+            # reload shader on file change
+            try:
+                mt = os.path.getmtime(SHADER)
+                if mt != mtime:
+                    mtime = mt
+                    try:
+                        fn  = load(SHADER)
+                        err = None
+                    except Exception as e:
+                        err = str(e)
+            except Exception:
+                pass
 
-    if frame_count % POLL_EVERY == 0:
-        # reload shader on file change
-        try:
-            mt = os.path.getmtime(SHADER)
-            if mt != mtime:
-                mtime = mt
-                try:
-                    fn  = load(SHADER)
-                    err = None
-                except Exception as e:
-                    err = str(e)
-        except Exception:
-            pass
+            # reload charset
+            try:
+                if os.path.exists(CHARS_FILE):
+                    ct = os.path.getmtime(CHARS_FILE)
+                    if ct != chars_mtime:
+                        chars_mtime = ct
+                        with open(CHARS_FILE) as f:
+                            new = f.read().strip()
+                        if len(new) >= 2:
+                            CHARS = new
+                            _refresh_lut_chars()
+            except Exception:
+                pass
 
-        # reload charset
-        try:
-            if os.path.exists(CHARS_FILE):
-                ct = os.path.getmtime(CHARS_FILE)
-                if ct != chars_mtime:
-                    chars_mtime = ct
-                    with open(CHARS_FILE) as f:
-                        new = f.read().strip()
-                    if len(new) >= 2:
-                        CHARS = new
+            # reload palette
+            try:
+                if os.path.exists(PAL_FILE):
+                    pt = os.path.getmtime(PAL_FILE)
+                    if pt != pal_mtime:
+                        pal_mtime = pt
+                        with open(PAL_FILE) as f:
+                            new_pal = f.read().strip()
+                        lut      = make_lut(new_pal)
+                        pal_name = new_pal
                         _refresh_lut_chars()
-        except Exception:
-            pass
+            except Exception:
+                pass
 
-        # reload palette
+        frame_count += 1
+
         try:
-            if os.path.exists(PAL_FILE):
-                pt = os.path.getmtime(PAL_FILE)
-                if pt != pal_mtime:
-                    pal_mtime = pt
-                    with open(PAL_FILE) as f:
-                        new_pal = f.read().strip()
-                    lut      = make_lut(new_pal)
-                    pal_name = new_pal
-                    _refresh_lut_chars()
-        except Exception:
+            cols, rows = os.get_terminal_size()
+        except OSError:
+            cols, rows = 80, 24
+        rows -= 1
+
+        frame_body = render(fn, t, cols, rows)
+
+        status = (RED + f" ✕  {err}"[:cols].ljust(cols) + RESET) if err else \
+                 (DIM + f" ●  {pal_name}  {cols}×{rows}  t={t:.1f}".ljust(cols) + RESET)
+
+        try:
+            sys.stdout.buffer.write((frame_body + f"\033[{rows+1};1H" + status).encode("utf-8"))
+            sys.stdout.buffer.flush()
+        except OSError:
             pass
 
-    frame_count += 1
-
-    try:
-        cols, rows = os.get_terminal_size()
-    except OSError:
-        cols, rows = 80, 24
-    rows -= 1
-
-    frame_body = render(fn, t, cols, rows)
-
-    status = (RED + f" ✕  {err}"[:cols].ljust(cols) + RESET) if err else \
-             (DIM + f" ●  {pal_name}  {cols}×{rows}  t={t:.1f}".ljust(cols) + RESET)
-
-    try:
-        sys.stdout.buffer.write((frame_body + f"\033[{rows+1};1H" + status).encode("utf-8"))
-        sys.stdout.buffer.flush()
-    except OSError:
-        pass
-
-    # Sleep for the remainder of the frame budget — no busy-wait spin loop.
-    # Spinning pegs a CPU core and starves the terminal/screen recorder,
-    # which makes the pty buffer fill faster and causes hangs.
-    elapsed = time.monotonic() - frame_start
-    sleep_time = FRAME_TIME - elapsed
-    if sleep_time > 0:
-        time.sleep(sleep_time)
+        # Sleep for the remainder of the frame budget — no busy-wait spin loop.
+        elapsed = time.monotonic() - frame_start
+        sleep_time = FRAME_TIME - elapsed
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+finally:
+    sys.stdout.buffer.write(SHOW.encode("utf-8"))
+    sys.stdout.buffer.flush()
