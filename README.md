@@ -12,7 +12,7 @@ v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 
 ```bash
 cd chartty
-bash install.sh
+bash install/install.sh
 ```
 
 
