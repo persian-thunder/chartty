@@ -21,10 +21,16 @@ CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 CHARS      = " ·:│▒█"
 
-HIDE  = "\033[?25l"
-SHOW  = "\033[?25h"
+HIDE = "\033[?25l"
+SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
+# Synchronized Update Protocol — only supported by modern terminals (WezTerm, Kitty, iTerm2)
+# Terminal.app does not support it and behaves incorrectly when these are sent
+_TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
+_USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
+BSU = "\033[?2026h" if _USE_SYNC else ""
+ESU = "\033[?2026l" if _USE_SYNC else ""
 RED   = "\033[31m"
 DIM   = "\033[2m"
 RESET = "\033[0m"
@@ -174,8 +180,10 @@ sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time = time.monotonic()
-FRAME_TIME = 1.0 / 30.0   # 30 fps — halves pty output; screen recorders add rendering overhead
-POLL_EVERY = 3             # check config files every N frames (~10 Hz)
+# Terminal.app is CPU-rendered and can't consume 30fps of ANSI — drop to 8fps
+# so flush() doesn't block for ~1s per frame making everything unresponsive
+FRAME_TIME = 1.0 / 8.0 if _TERM_PROGRAM == "Apple_Terminal" else 1.0 / 30.0
+POLL_EVERY = 3  # check config files every N frames
 frame_count = 0
 
 try:
@@ -239,7 +247,8 @@ try:
                  (DIM + f" ●  {pal_name}  {cols}×{rows}  t={t:.1f}".ljust(cols) + RESET)
 
         try:
-            sys.stdout.buffer.write((frame_body + f"\033[{rows+1};1H" + status).encode("utf-8"))
+            data = (BSU + frame_body + f"\033[{rows+1};1H" + status + HIDE + "\033[1;1H" + ESU).encode("utf-8")
+            sys.stdout.buffer.write(data)
             sys.stdout.buffer.flush()
         except OSError:
             pass

@@ -11,6 +11,7 @@ tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 0.15
 
 tmux new-session -d -s "$SESSION" "$PYTHON $DIR/src/renderer.py"
+tmux set-option -t "$SESSION" allow-passthrough on
 
 # Wait until the session is confirmed alive instead of a fixed sleep
 for i in $(seq 1 40); do

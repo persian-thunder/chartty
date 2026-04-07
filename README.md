@@ -68,6 +68,19 @@ repl.py        →   shader.py   →   renderer.py
 ```
 
 
+## Troubleshooting
+
+**Cursor flickers in WezTerm**
+
+Add this to your `~/.tmux.conf`:
+
+```
+set -as terminal-features ',*:sync'
+```
+
+This enables synchronized output, which prevents the cursor from jumping between panes during rendering.
+
+
 ## Requirements ‧₊ ᵎᵎ 🍒 ⋅ ˚✮
 
 - macOS or Linux
