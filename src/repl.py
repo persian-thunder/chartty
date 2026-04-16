@@ -70,7 +70,8 @@ EXAMPLES = [
 SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4}
 
 # ── stored lines (Python expressions) ────────────────────────────────────────
-lines = ["v = math.sin(math.cos(t + cx) * math.sin(cx + t))"]
+lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
+         "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
 
 def write_shader():
     body = "".join("    " + l + "\n" for l in lines)

@@ -10,7 +10,12 @@ stty sane 2>/dev/null || true
 tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 0.15
 
-tmux new-session -d -s "$SESSION" "$PYTHON $DIR/src/renderer.py"
+tmux new-session -d -s "$SESSION" \
+    -e "TERM_PROGRAM=${TERM_PROGRAM:-}" \
+    -e "ITERM_SESSION_ID=${ITERM_SESSION_ID:-}" \
+    -e "WEZTERM_PANE=${WEZTERM_PANE:-}" \
+    -e "WEZTERM_EXECUTABLE=${WEZTERM_EXECUTABLE:-}" \
+    "$PYTHON $DIR/src/renderer.py"
 tmux set-option -t "$SESSION" allow-passthrough on
 
 # Wait until the session is confirmed alive instead of a fixed sleep
@@ -19,6 +24,12 @@ for i in $(seq 1 40); do
     sleep 0.05
 done
 
-tmux split-window -h -p 35 -t "$SESSION" "$PYTHON $DIR/src/repl.py"
+tmux split-window -h -p 35 -t "$SESSION" \
+    -e "TERM_PROGRAM=${TERM_PROGRAM:-}" \
+    -e "ITERM_SESSION_ID=${ITERM_SESSION_ID:-}" \
+    -e "WEZTERM_PANE=${WEZTERM_PANE:-}" \
+    -e "WEZTERM_EXECUTABLE=${WEZTERM_EXECUTABLE:-}" \
+    "$PYTHON $DIR/src/repl.py"
 
-exec tmux attach -t "$SESSION"
+trap "tmux kill-session -t '$SESSION' 2>/dev/null" EXIT
+tmux attach -t "$SESSION"
