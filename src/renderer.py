@@ -349,7 +349,7 @@ try:
                  (DIM + f" ●  {pal_name}  {cols}×{rows}  {fps:.0f}fps  {_last_frame_kb:.0f}KB  render={render_ms:.1f}ms".ljust(cols) + RESET)
 
         try:
-            data = (BSU + frame_body + f"\033[{rows+1};1H" + status + HIDE + "\033[1;1H" + ESU).encode("utf-8")
+            data = (BSU + HIDE + frame_body + f"\033[{rows+1};1H" + status + "\033[1;1H" + ESU).encode("utf-8")
             sys.stdout.buffer.write(data)
             sys.stdout.buffer.flush()
         except OSError:
