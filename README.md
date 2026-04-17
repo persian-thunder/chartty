@@ -88,3 +88,9 @@ set -as terminal-features ',*:sync'
 ```
 
 This enables synchronized output, which prevents the cursor from jumping between panes during rendering.
+
+
+
+## License
+
+MIT — Entroplay LLC
