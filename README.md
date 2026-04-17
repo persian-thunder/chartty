@@ -65,7 +65,6 @@ The renderer calls your *shader* function once per frame, passing numpy arrays f
 ```
 repl.py        →   shader.py   →   renderer.py
 (you type)         (your fn)       (numpy + tmux pane)
-
 ```
 
 
