@@ -93,4 +93,4 @@ This enables synchronized output, which prevents the cursor from jumping between
 
 ## License
 
-MIT — Entroplay LLC
+MIT — Entroplay™ LLC
