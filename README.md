@@ -12,7 +12,7 @@ v *= math.sin(math.atan2(cy, cx) * 7.0 + t)
 
 ```bash
 cd chartty
-bash install/install.sh
+bash install.sh
 ```
 
 
@@ -60,7 +60,7 @@ chars kawaii     switch character set
 
 ## How does it work ( •᷄‎ࡇ•᷅ )
 
-The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame. Frames build at ~60fps.
+The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame.
 
 ```
 repl.py        →   shader.py   →   renderer.py

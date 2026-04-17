@@ -2,7 +2,7 @@
 set -e
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$DIR/.." && pwd)"
+ROOT="$DIR"
 CMD="chartty"
 RED='\033[31m'; GREEN='\033[32m'; DIM='\033[2m'; RESET='\033[0m'
 
