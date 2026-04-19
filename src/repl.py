@@ -1,4 +1,4 @@
-import os, readline, subprocess, tempfile
+import os, re, readline, subprocess, tempfile
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
 _CONFIG    = os.path.join(_SRC, "..", "config")
@@ -38,10 +38,32 @@ PRESETS = {
     "thick":   " ▒█",
 }
 
-DIM   = "\033[2m"
-GREEN = "\033[32m"
-RED   = "\033[31m"
-RESET = "\033[0m"
+DIM    = "\033[2m"
+GREEN  = "\033[32m"
+RED    = "\033[31m"
+RESET  = "\033[0m"
+ORANGE = "\033[38;2;255;140;0m"
+CYAN   = "\033[38;2;0;200;255m"
+LIME   = "\033[38;2;50;255;100m"
+PINK   = "\033[38;2;255;80;180m"
+PURPLE = "\033[38;2;180;100;255m"
+GOLD   = "\033[38;2;255;220;50m"
+
+_VAR_COLORS = {
+    'cols': PURPLE, 'rows': PURPLE,
+    'cx': CYAN, 'cy': CYAN, 'x': CYAN, 'y': CYAN,
+    't': LIME, 'v': ORANGE, 'c': PINK,
+}
+_HL_PAT = re.compile(r'\b(?:cols|rows|cx|cy|x|y|t|v|c)\b|math\.(?:atan2|atan|asin|acos|sinh|cosh|tanh|sin|cos|tan)')
+
+def _highlight(line):
+    def _sub(m):
+        w = m.group()
+        if '.' in w:
+            prefix, func = w.split('.', 1)
+            return prefix + '.' + GOLD + func + RESET
+        return _VAR_COLORS.get(w, w) + w + RESET
+    return _HL_PAT.sub(_sub, line)
 
 BOILERPLATE_TOP = """def value(x, y, t, cols, rows):
     cx = x - cols / 2
@@ -114,7 +136,7 @@ def try_compile():
 def show():
     print(DIM + "─" * 36 + RESET)
     for i, l in enumerate(lines):
-        print(f"{DIM}{i:2}{RESET}  {l}")
+        print(f"{ORANGE}{i:2}{RESET}  {_highlight(l)}")
     print(DIM + "─" * 36 + RESET)
 
 def set_chars(s):
@@ -165,7 +187,7 @@ def show_examples():
 write_shader()
 
 print()
-print("  ˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖  ")
+print(f" {ORANGE}˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖{RESET}  ")
 print()
 print("  Shader variables")
 print(f"  {DIM}(x,y)   pixel position   (cx,cy) = centered{RESET}")

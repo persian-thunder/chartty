@@ -1,7 +1,7 @@
 import math, sys, time, os, signal, types
 import numpy as np
 
-# numpy drop-in for math — lets shader run on the full pixel grid at once
+# numpy drop-in
 _math_np = types.SimpleNamespace(
     sin=np.sin,   cos=np.cos,   tan=np.tan,
     asin=np.arcsin, acos=np.arccos, atan=np.arctan, atan2=np.arctan2,
@@ -25,12 +25,12 @@ HIDE = "\033[?25l"
 SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
-# Terminal detection
+
+# detect terminal
 _TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
 _IN_TMUX      = "TMUX" in os.environ
 
-# Fallback: tmux strips TERM_PROGRAM from the environment by default.
-# Use well-known secondary env vars that tmux does pass through.
+# fallback: tmux strips TERM_PROGRAM from env by default
 if not _TERM_PROGRAM:
     if os.environ.get("ITERM_SESSION_ID"):
         _TERM_PROGRAM = "iTerm.app"
@@ -39,15 +39,11 @@ if not _TERM_PROGRAM:
 
 _USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
 
-# WezTerm's GPU renderer handles high ANSI throughput; iTerm2 / unknown terminals
-# stall when we push too many bytes through tmux.  Use 24-bit color only where it
-# won't cause backpressure; fall back to 8-bit (shorter escapes, ~30% less data).
+# use 24-bit color in GPU-acceelerated envs
 _USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty")
 
-# Throughput budget (bytes/sec).  After every frame we sleep long enough that our
-# average write rate never exceeds this value.  This makes performance scale
-# gracefully with window size — bigger window → bigger frame → lower FPS, but
-# always smooth, never overwhelming the terminal's PTY buffer.
+# hroughput budget (bytes/sec) after every frame we sleep long enough that our
+# average write rate never exceeds set value
 _BUDGET_BPS = (
     600_000    if _TERM_PROGRAM == "Apple_Terminal" else
     50_000_000 if _TERM_PROGRAM in ("WezTerm", "kitty") else
@@ -59,7 +55,7 @@ _BUDGET_BPS = (
 # Problem: inside tmux, CSI sequences (\033[...) are consumed by tmux and never
 # reach the outer terminal (iTerm2, WezTerm, etc.).
 # Fix: wrap in DCS passthrough (\033Ptmux;\033\033[...ESC\\) so tmux forwards
-# the sequence verbatim to the outer terminal. Requires allow-passthrough on.
+# the sequence verbatim to the outer terminal
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -125,6 +121,7 @@ def _rgb_to_8bit(r, g, b):
     bi = round(b / 255.0 * 5)
     return 16 + 36 * ri + 6 * gi + bi
 
+# build color lookup table
 def make_lut(name):
     lut = []
     for i in range(256):
@@ -277,8 +274,8 @@ sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time   = time.monotonic()
-# Max-FPS ceiling — the throughput budget (_BUDGET_BPS) will push this lower
-# automatically when frames are large (big window).
+# max-FPS ceiling - the throughput budget (_BUDGET_BPS) will push this lower
+# automatically when frames are large (big window)
 FRAME_TIME   = 1.0 / 8.0 if _TERM_PROGRAM == "Apple_Terminal" else 1.0 / 30.0
 POLL_EVERY   = 3
 frame_count  = 0
@@ -358,8 +355,8 @@ try:
         elapsed        = time.monotonic() - frame_start
         _last_elapsed  = elapsed
         _last_frame_kb = len(data) / 1024
-        # Sleep whichever is longer: FPS ceiling or throughput budget.
-        # This makes FPS scale down automatically for large windows on slow terminals.
+        # sleep whichever is longer: FPS ceiling or throughput budget
+        # FPS scales down automatically for large windows/slow terminals
         budget_time = len(data) / _BUDGET_BPS
         sleep_time  = max(FRAME_TIME, budget_time) - elapsed
         if sleep_time > 0:
