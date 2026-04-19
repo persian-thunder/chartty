@@ -52,6 +52,7 @@ VENV="$ROOT/.venv"
 if [ ! -d "$VENV" ]; then
     python3 -m venv "$VENV"
 fi
+"$VENV/bin/python3" -m ensurepip --upgrade 2>/dev/null || true
 PIP="$VENV/bin/pip"
 echo -e "  ${DIM}ok${RESET}   venv"
 
