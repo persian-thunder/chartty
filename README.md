@@ -33,7 +33,7 @@ Type  trigonometric functions, press enter, watch magic happen in real-time.
 | `v` | brightness 0..1 |
 | `c` | color 0..1 (defaults to `v`) |
 
-use anything from `math`, `math.sin`, `math.cos`, `math.sqrt`, `math.pi`, `math.atan2` ...
+use `math`, `math.sin`, `math.cos`, `math.sqrt`, `math.pi`, `math.atan2` ...
 
 **Commands**
 
@@ -60,7 +60,7 @@ chars kawaii     switch character set
 
 ## How does it work ( •᷄‎ࡇ•᷅ )
 
-The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame. Frames build at ~60fps.
+The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame.
 
 ```
 repl.py        →   shader.py   →   renderer.py
@@ -68,8 +68,29 @@ repl.py        →   shader.py   →   renderer.py
 ```
 
 
+
 ## Requirements ‧₊ ᵎᵎ 🍒 ⋅ ˚✮
 
 - macOS or Linux
 - Python 3
 - tmux (installed automatically by install.sh)
+
+
+
+## Troubleshooting (╭ರ_•́)
+
+**Cursor flickers**
+
+Add this to your `~/.tmux.conf`:
+
+```
+set -as terminal-features ',*:sync'
+```
+
+This enables synchronized output, which prevents the cursor from jumping between panes during rendering.
+
+
+
+## License
+
+MIT — Entroplay™ LLC

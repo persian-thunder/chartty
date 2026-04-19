@@ -39,6 +39,14 @@ if ! command -v tmux &>/dev/null; then
 fi
 echo -e "  ${DIM}ok${RESET}   tmux"
 
+# ── tmux sync (fixes cursor jump on large windows) ────────────────────────────
+TMUX_CONF="$HOME/.tmux.conf"
+SYNC_LINE="set -as terminal-features ',*:sync'"
+if ! grep -qF "$SYNC_LINE" "$TMUX_CONF" 2>/dev/null; then
+    echo "$SYNC_LINE" >> "$TMUX_CONF"
+fi
+echo -e "  ${DIM}ok${RESET}   tmux sync"
+
 # ── virtual environment ───────────────────────────────────────────────────────
 VENV="$ROOT/.venv"
 if [ ! -d "$VENV" ]; then
