@@ -101,7 +101,6 @@ def write_shader():
         f.write(BOILERPLATE_TOP + body + BOILERPLATE_BOT)
 
 def try_compile():
-    """Validate shader by exec-ing it with numpy arrays. Returns (ok, error_str)."""
     import types
     try:
         import numpy as np
@@ -181,7 +180,7 @@ def show_examples():
     for name, ex_lines in EXAMPLES:
         print(f"\n  {name}")
         for l in ex_lines:
-            print(f"{DIM}    > {RESET}{l}")
+            print(f"{DIM}    > {RESET}{_highlight(l)}")
 
 # ── startup ───────────────────────────────────────────────────────────────────
 write_shader()
