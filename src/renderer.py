@@ -130,18 +130,33 @@ def make_lut(name):
             r, g, b = 0, int(30 + n*225), int(n*40)
         elif name == "fire":
             r = min(255, int(n*3*255)); g = min(255, max(0, int((n-.33)*3*255))); b = min(255, max(0, int((n-.66)*3*255)))
-        elif name == "ice":
-            r = int(n*80); g = int(180 + n*75); b = 255
         elif name == "rainbow":
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         elif name == "plasma":
             r = int(128 + 127*math.sin(n*math.pi*2)); g = int(128 + 127*math.sin(n*math.pi*2+2.094)); b = int(128 + 127*math.sin(n*math.pi*2+4.189))
         elif name == "gold":
             r = min(255, int(n*2*255)); g = int(n*180); b = int(n*20)
-        elif name == "rose":
-            r, g, b = hsv(0.9 + n*0.15, 0.8, n)
         elif name == "mono":
             r = g = b = int(n * 255)
+        elif name == "acid":
+            h = 0.25 + 0.12 * math.sin(n * math.pi * 4)
+            r, g, b = hsv(h, 1.0, 0.2 + 0.8 * n)
+        elif name == "acid2":
+            colors = [
+                (  0,   0,   0),
+                (  7,  88,   0),
+                (137, 255,   0),
+                (200, 212, 138),
+                (253, 255,   0),
+            ]
+            segments = len(colors) - 1
+            pos = n * segments
+            lo  = min(int(pos), segments - 1)
+            hi  = lo + 1
+            t2  = pos - lo
+            r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
+            g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
+            b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
         elif name == "fiesta":
             colors = [
                 (255, 190,  11),  # amber gold
@@ -158,6 +173,27 @@ def make_lut(name):
             r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
             g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
             b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
+        elif name == "toxic":
+            colors = [(0,0,0),(10,40,0),(60,180,0),(180,255,0),(220,255,50)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
+        elif name == "lava":
+            colors = [(0,0,0),(120,0,0),(255,40,0),(255,160,0),(255,255,200)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
+        elif name == "electricity":
+            colors = [(0,0,0),(20,0,80),(0,60,255),(100,200,255),(255,255,255)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
         else:
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         if _TERM_PROGRAM == "Apple_Terminal":

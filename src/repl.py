@@ -6,7 +6,7 @@ SHADER     = os.path.join(_CONFIG, "shader.py")
 CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 
-PALETTES = ["rainbow", "fire", "plasma", "ice", "green", "gold", "rose", "neon", "mono", "fiesta"]
+PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "neon", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
 
 PRESETS = {
     "default": " ·:│▒█",
@@ -26,12 +26,14 @@ PRESETS = {
     "heart":   " ♡♥",
     "star":    " ·✦✧★",
     "braille": " ⠂⠆⠖⠶⠷⠿",
-    "math":    " ∘∙◦○●",
     "box":     " ▖▗▘▙▚▛▜▝▞▟█",
     "pixel":   " ▏▎▍▌▋▊▉█",
     "tri":     " ▴▵△▲",
     "matrix":  " ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵ",
     "hex":     " 0123456789ABCDEF",
+    "nike":    " ❯✔",
+    "swoosh":  " ·∕╱⟩»❯➤✓✔",
+    "photo":   " .,:;i1tfLCG08@",
 }
 
 DIM    = "\033[2m"
@@ -73,8 +75,12 @@ BOILERPLATE_BOT = """    c = v
 
 # ── examples (Python syntax) ──────────────────────────────────────────────────
 EXAMPLES = [
-    ("moiré wormhole",   ["v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)",
-                          "v *= math.sin(math.atan2(cy, cx) * 7.0 + t)"]),
+    ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
+                          "a = math.atan2(cy, cx)",
+                          "v = math.sin(r / 4.0 - t * 5.0) * math.sin(a * 7.0 + t * 1.5)",
+                          "v += 0.5 * math.sin(r / 2.0 - t * 3.0) * math.sin(a * 13.0 - t * 0.7)",
+                          "v = v * 0.5 + 0.5",
+                          "c = math.sin(a * 3.0 + r / 4.0 - t * 2.0) * 0.5 + 0.5"]),
     ("acid grid",        ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
     ("breathing spiral", ["v = math.sin(math.atan2(cy, cx) * 5.0 - math.sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0)"]),
