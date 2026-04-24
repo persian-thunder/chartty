@@ -89,13 +89,35 @@ EXAMPLES = [
     ("glitch ripple",    ["v = math.sin(x / 4.0 + math.sin(t + y / 20.0) * 10.0)",
                           "v += math.sin(y / 2.0 - t * 2.0) * 0.5",
                           "v = math.sin(v * math.pi * 2.0)"]),
+    ("groove",           ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "v = math.sin(x / 3.0 + math.sin(y /4.0 + t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
 ]
 
-SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4}
+SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
 
 # ── stored lines (Python expressions) ────────────────────────────────────────
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
+
+_layout = "horizontal"
+
+def toggle_layout():
+    global _layout
+    session = os.environ.get("TMUX", "")
+    if not session:
+        print(f"{RED}  not inside tmux{RESET}")
+        return
+    if _layout == "horizontal":
+        subprocess.call(["tmux", "select-layout", "even-vertical"])
+        _layout = "vertical"
+        print(f"{DIM}  layout → vertical (renderer top, editor bottom){RESET}")
+    else:
+        subprocess.call(["tmux", "select-layout", "even-horizontal"])
+        _layout = "horizontal"
+        print(f"{DIM}  layout → horizontal (renderer left, editor right){RESET}")
 
 def write_shader():
     body = "".join("    " + l + "\n" for l in lines)
@@ -202,6 +224,7 @@ print(f"  {DIM}<enter>  = add line          undo    = remove last line{RESET}")
 print(f"  {DIM}list     = show code         clear   = reset{RESET}")
 print(f"  {DIM}palette  = show/set palette  chars   = show/set charset{RESET}")
 print(f"  {DIM}examples = show presets      edit    = open in $EDITOR{RESET}")
+print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
@@ -228,6 +251,8 @@ while True:
         show()
     elif raw == "examples":
         show_examples()
+    elif raw == "layout":
+        toggle_layout()
     elif raw == "edit":
         open_editor()
     elif raw.startswith("palette"):
