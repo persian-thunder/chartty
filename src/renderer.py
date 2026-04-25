@@ -1,7 +1,7 @@
 import math, sys, time, os, signal, types
 import numpy as np
 
-# numpy drop-in for math — lets shader run on the full pixel grid at once
+# numpy drop-in
 _math_np = types.SimpleNamespace(
     sin=np.sin,   cos=np.cos,   tan=np.tan,
     asin=np.arcsin, acos=np.arccos, atan=np.arctan, atan2=np.arctan2,
@@ -25,12 +25,12 @@ HIDE = "\033[?25l"
 SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
-# Terminal detection
+
+# detect terminal
 _TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
 _IN_TMUX      = "TMUX" in os.environ
 
-# Fallback: tmux strips TERM_PROGRAM from the environment by default.
-# Use well-known secondary env vars that tmux does pass through.
+# fallback: tmux strips TERM_PROGRAM from env by default
 if not _TERM_PROGRAM:
     if os.environ.get("ITERM_SESSION_ID"):
         _TERM_PROGRAM = "iTerm.app"
@@ -39,15 +39,11 @@ if not _TERM_PROGRAM:
 
 _USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
 
-# WezTerm's GPU renderer handles high ANSI throughput; iTerm2 / unknown terminals
-# stall when we push too many bytes through tmux.  Use 24-bit color only where it
-# won't cause backpressure; fall back to 8-bit (shorter escapes, ~30% less data).
+# use 24-bit color in GPU-acceelerated envs
 _USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty")
 
-# Throughput budget (bytes/sec).  After every frame we sleep long enough that our
-# average write rate never exceeds this value.  This makes performance scale
-# gracefully with window size — bigger window → bigger frame → lower FPS, but
-# always smooth, never overwhelming the terminal's PTY buffer.
+# hroughput budget (bytes/sec) after every frame we sleep long enough that our
+# average write rate never exceeds set value
 _BUDGET_BPS = (
     600_000    if _TERM_PROGRAM == "Apple_Terminal" else
     50_000_000 if _TERM_PROGRAM in ("WezTerm", "kitty") else
@@ -59,7 +55,7 @@ _BUDGET_BPS = (
 # Problem: inside tmux, CSI sequences (\033[...) are consumed by tmux and never
 # reach the outer terminal (iTerm2, WezTerm, etc.).
 # Fix: wrap in DCS passthrough (\033Ptmux;\033\033[...ESC\\) so tmux forwards
-# the sequence verbatim to the outer terminal. Requires allow-passthrough on.
+# the sequence verbatim to the outer terminal
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -125,6 +121,7 @@ def _rgb_to_8bit(r, g, b):
     bi = round(b / 255.0 * 5)
     return 16 + 36 * ri + 6 * gi + bi
 
+# build color lookup table
 def make_lut(name):
     lut = []
     for i in range(256):
@@ -133,18 +130,33 @@ def make_lut(name):
             r, g, b = 0, int(30 + n*225), int(n*40)
         elif name == "fire":
             r = min(255, int(n*3*255)); g = min(255, max(0, int((n-.33)*3*255))); b = min(255, max(0, int((n-.66)*3*255)))
-        elif name == "ice":
-            r = int(n*80); g = int(180 + n*75); b = 255
         elif name == "rainbow":
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         elif name == "plasma":
             r = int(128 + 127*math.sin(n*math.pi*2)); g = int(128 + 127*math.sin(n*math.pi*2+2.094)); b = int(128 + 127*math.sin(n*math.pi*2+4.189))
         elif name == "gold":
             r = min(255, int(n*2*255)); g = int(n*180); b = int(n*20)
-        elif name == "rose":
-            r, g, b = hsv(0.9 + n*0.15, 0.8, n)
         elif name == "mono":
             r = g = b = int(n * 255)
+        elif name == "acid":
+            h = 0.25 + 0.12 * math.sin(n * math.pi * 4)
+            r, g, b = hsv(h, 1.0, 0.2 + 0.8 * n)
+        elif name == "acid2":
+            colors = [
+                (  0,   0,   0),
+                (  7,  88,   0),
+                (137, 255,   0),
+                (200, 212, 138),
+                (253, 255,   0),
+            ]
+            segments = len(colors) - 1
+            pos = n * segments
+            lo  = min(int(pos), segments - 1)
+            hi  = lo + 1
+            t2  = pos - lo
+            r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
+            g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
+            b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
         elif name == "fiesta":
             colors = [
                 (255, 190,  11),  # amber gold
@@ -161,6 +173,27 @@ def make_lut(name):
             r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
             g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
             b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
+        elif name == "toxic":
+            colors = [(0,0,0),(10,40,0),(60,180,0),(180,255,0),(220,255,50)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
+        elif name == "lava":
+            colors = [(0,0,0),(120,0,0),(255,40,0),(255,160,0),(255,255,200)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
+        elif name == "electricity":
+            colors = [(0,0,0),(20,0,80),(0,60,255),(100,200,255),(255,255,255)]
+            segments = len(colors) - 1
+            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
+            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
+            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
+            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
         else:
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         if _TERM_PROGRAM == "Apple_Terminal":
@@ -277,8 +310,8 @@ sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time   = time.monotonic()
-# Max-FPS ceiling — the throughput budget (_BUDGET_BPS) will push this lower
-# automatically when frames are large (big window).
+# max-FPS ceiling - the throughput budget (_BUDGET_BPS) will push this lower
+# automatically when frames are large (big window)
 FRAME_TIME   = 1.0 / 8.0 if _TERM_PROGRAM == "Apple_Terminal" else 1.0 / 30.0
 POLL_EVERY   = 3
 frame_count  = 0
@@ -358,8 +391,8 @@ try:
         elapsed        = time.monotonic() - frame_start
         _last_elapsed  = elapsed
         _last_frame_kb = len(data) / 1024
-        # Sleep whichever is longer: FPS ceiling or throughput budget.
-        # This makes FPS scale down automatically for large windows on slow terminals.
+        # sleep whichever is longer: FPS ceiling or throughput budget
+        # FPS scales down automatically for large windows/slow terminals
         budget_time = len(data) / _BUDGET_BPS
         sleep_time  = max(FRAME_TIME, budget_time) - elapsed
         if sleep_time > 0:

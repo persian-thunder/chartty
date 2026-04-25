@@ -1,4 +1,4 @@
-import os, readline, subprocess, tempfile
+import os, re, readline, subprocess, tempfile
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
 _CONFIG    = os.path.join(_SRC, "..", "config")
@@ -6,7 +6,7 @@ SHADER     = os.path.join(_CONFIG, "shader.py")
 CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 
-PALETTES = ["rainbow", "fire", "plasma", "ice", "green", "gold", "rose", "neon", "mono", "fiesta"]
+PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "neon", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
 
 PRESETS = {
     "default": " ·:│▒█",
@@ -26,22 +26,41 @@ PRESETS = {
     "heart":   " ♡♥",
     "star":    " ·✦✧★",
     "braille": " ⠂⠆⠖⠶⠷⠿",
-    "math":    " ∘∙◦○●",
     "box":     " ▖▗▘▙▚▛▜▝▞▟█",
     "pixel":   " ▏▎▍▌▋▊▉█",
     "tri":     " ▴▵△▲",
-    "diamond": " ·◇◆",
-    "fire2":   " .,*#@░▒▓█",
     "matrix":  " ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵ",
     "hex":     " 0123456789ABCDEF",
-    "morse":   " .-",
-    "thick":   " ▒█",
+    "swoosh":  " ·∕╱⟩»❯➤✓✔",
+    "photo":   " .,:;i1tfLCG08@",
 }
 
-DIM   = "\033[2m"
-GREEN = "\033[32m"
-RED   = "\033[31m"
-RESET = "\033[0m"
+DIM    = "\033[2m"
+GREEN  = "\033[32m"
+RED    = "\033[31m"
+RESET  = "\033[0m"
+ORANGE = "\033[38;2;255;140;0m"
+CYAN   = "\033[38;2;0;200;255m"
+LIME   = "\033[38;2;50;255;100m"
+PINK   = "\033[38;2;255;80;180m"
+PURPLE = "\033[38;2;180;100;255m"
+GOLD   = "\033[38;2;255;220;50m"
+
+_VAR_COLORS = {
+    'cols': PURPLE, 'rows': PURPLE,
+    'cx': CYAN, 'cy': CYAN, 'x': CYAN, 'y': CYAN,
+    't': LIME, 'v': ORANGE, 'c': PINK,
+}
+_HL_PAT = re.compile(r'\b(?:cols|rows|cx|cy|x|y|t|v|c)\b|math\.(?:atan2|atan|asin|acos|sinh|cosh|tanh|sin|cos|tan)')
+
+def _highlight(line):
+    def _sub(m):
+        w = m.group()
+        if '.' in w:
+            prefix, func = w.split('.', 1)
+            return prefix + '.' + GOLD + func + RESET
+        return _VAR_COLORS.get(w, w) + w + RESET
+    return _HL_PAT.sub(_sub, line)
 
 BOILERPLATE_TOP = """def value(x, y, t, cols, rows):
     cx = x - cols / 2
@@ -55,8 +74,12 @@ BOILERPLATE_BOT = """    c = v
 
 # ── examples (Python syntax) ──────────────────────────────────────────────────
 EXAMPLES = [
-    ("moiré wormhole",   ["v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)",
-                          "v *= math.sin(math.atan2(cy, cx) * 7.0 + t)"]),
+    ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
+                          "a = math.atan2(cy, cx)",
+                          "v = math.sin(r / 4.0 - t * 5.0) * math.sin(a * 7.0 + t * 1.5)",
+                          "v += 0.5 * math.sin(r / 2.0 - t * 3.0) * math.sin(a * 13.0 - t * 0.7)",
+                          "v = v * 0.5 + 0.5",
+                          "c = math.sin(a * 3.0 + r / 4.0 - t * 2.0) * 0.5 + 0.5"]),
     ("acid grid",        ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
     ("breathing spiral", ["v = math.sin(math.atan2(cy, cx) * 5.0 - math.sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0)"]),
@@ -65,13 +88,35 @@ EXAMPLES = [
     ("glitch ripple",    ["v = math.sin(x / 4.0 + math.sin(t + y / 20.0) * 10.0)",
                           "v += math.sin(y / 2.0 - t * 2.0) * 0.5",
                           "v = math.sin(v * math.pi * 2.0)"]),
+    ("groove",           ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "v = math.sin(x / 3.0 + math.sin(y /4.0 + t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
 ]
 
-SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4}
+SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
 
 # ── stored lines (Python expressions) ────────────────────────────────────────
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
+
+_layout = "horizontal"
+
+def toggle_layout():
+    global _layout
+    session = os.environ.get("TMUX", "")
+    if not session:
+        print(f"{RED}  not inside tmux{RESET}")
+        return
+    if _layout == "horizontal":
+        subprocess.call(["tmux", "select-layout", "even-vertical"])
+        _layout = "vertical"
+        print(f"{DIM}  layout → vertical (renderer top, editor bottom){RESET}")
+    else:
+        subprocess.call(["tmux", "select-layout", "even-horizontal"])
+        _layout = "horizontal"
+        print(f"{DIM}  layout → horizontal (renderer left, editor right){RESET}")
 
 def write_shader():
     body = "".join("    " + l + "\n" for l in lines)
@@ -79,7 +124,6 @@ def write_shader():
         f.write(BOILERPLATE_TOP + body + BOILERPLATE_BOT)
 
 def try_compile():
-    """Validate shader by exec-ing it with numpy arrays. Returns (ok, error_str)."""
     import types
     try:
         import numpy as np
@@ -114,7 +158,7 @@ def try_compile():
 def show():
     print(DIM + "─" * 36 + RESET)
     for i, l in enumerate(lines):
-        print(f"{DIM}{i:2}{RESET}  {l}")
+        print(f"{ORANGE}{i:2}{RESET}  {_highlight(l)}")
     print(DIM + "─" * 36 + RESET)
 
 def set_chars(s):
@@ -159,13 +203,13 @@ def show_examples():
     for name, ex_lines in EXAMPLES:
         print(f"\n  {name}")
         for l in ex_lines:
-            print(f"{DIM}    > {RESET}{l}")
+            print(f"{DIM}    > {RESET}{_highlight(l)}")
 
 # ── startup ───────────────────────────────────────────────────────────────────
 write_shader()
 
 print()
-print("  ˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖  ")
+print(f" {ORANGE}˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖{RESET}  ")
 print()
 print("  Shader variables")
 print(f"  {DIM}(x,y)   pixel position   (cx,cy) = centered{RESET}")
@@ -179,6 +223,7 @@ print(f"  {DIM}<enter>  = add line          undo    = remove last line{RESET}")
 print(f"  {DIM}list     = show code         clear   = reset{RESET}")
 print(f"  {DIM}palette  = show/set palette  chars   = show/set charset{RESET}")
 print(f"  {DIM}examples = show presets      edit    = open in $EDITOR{RESET}")
+print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
@@ -205,6 +250,8 @@ while True:
         show()
     elif raw == "examples":
         show_examples()
+    elif raw == "layout":
+        toggle_layout()
     elif raw == "edit":
         open_editor()
     elif raw.startswith("palette"):

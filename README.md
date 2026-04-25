@@ -21,10 +21,10 @@ bash install/install.sh
 
 `chartty` opens two panes. Left is renderer, right is live editor.
 
-Type  trigonometric functions, press enter, watch magic happen in real-time.
+Type trigonometric functions, press enter, generate beautiful textures.
 
 
-| Variable | Purpose |
+| Variable | Usage |
 |---|---|
 | `x`, `y` | pixel position (top-left is 0,0) |
 | `cx`, `cy` | centered (`x - cols/2`, `y - rows/2`) |
@@ -47,14 +47,26 @@ examples        show built-in presets
 wormhole        moiré wormhole
 acid            acid grid
 spiral          breathing spiral
+groove          wave stretch
 tunnel          zoom tunnel
 ripple          glitch ripple
 palette         list palettes
 palette fire    switch palette
-chars kawaii     switch character set
+chars kawaii    switch character set
 ```
 
-**palettes:** `rainbow` `fire` `plasma` `ice` `green` `gold` `rose` `fiesta` `mono`
+**palettes:** `rainbow` `fire` `plasma` `green` `gold` `fiesta` `mono` `acid` `acid2` `toxic` `lava` `electricity`
+
+
+
+## Split view ⊟⊞
+
+`chartty` runs inside a tmux session with two panes — the renderer and the REPL. Default layout is horizontal:
+
+Type `layout` in the REPL to flip between:
+
+- **horizontal** — renderer left, editor right
+- **vertical**   — renderer top, editor bottom
 
 
 
@@ -77,20 +89,6 @@ repl.py        →   shader.py   →   renderer.py
 
 
 
-## Troubleshooting (╭ರ_•́)
+## License ( ◡̀_◡́)ᕤ
 
-**Cursor flickers**
-
-Add this to your `~/.tmux.conf`:
-
-```
-set -as terminal-features ',*:sync'
-```
-
-This enables synchronized output, which prevents the cursor from jumping between panes during rendering.
-
-
-
-## License
-
-MIT — Entroplay™ LLC
+MIT — Entroplay LLC
