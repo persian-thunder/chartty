@@ -51,7 +51,7 @@ tunnel          zoom tunnel
 ripple          glitch ripple
 palette         list palettes
 palette fire    switch palette
-chars kawaii     switch character set
+chars kawaii    switch character set
 ```
 
 **palettes:** `rainbow` `fire` `plasma` `ice` `green` `gold` `rose` `fiesta` `mono`
