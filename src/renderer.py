@@ -25,6 +25,7 @@ HIDE = "\033[?25l"
 SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
+BG_BLACK = "\033[48;2;0;0;0m"
 
 # detect terminal
 _TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
@@ -197,11 +198,11 @@ def make_lut(name):
         else:
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         if _TERM_PROGRAM == "Apple_Terminal":
-            lut.append(_nearest_ansi(r, g, b))
+            lut.append(_nearest_ansi(r, g, b) + "\033[40m")
         elif _USE_24BIT:
-            lut.append(f"\033[38;2;{r};{g};{b}m")
+            lut.append(f"\033[38;2;{r};{g};{b};48;2;0;0;0m")
         else:
-            lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)}m")
+            lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)};48;5;0m")
     return lut
 
 # ── shader loader ──────────────────────────────────────────────────────────────
@@ -306,7 +307,7 @@ err      = None
 
 _refresh_lut_chars()
 
-sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
+sys.stdout.buffer.write((HIDE + BG_BLACK + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time   = time.monotonic()
