@@ -17,6 +17,7 @@ tmux new-session -d -s "$SESSION" \
     -e "WEZTERM_EXECUTABLE=${WEZTERM_EXECUTABLE:-}" \
     "$PYTHON $DIR/src/renderer.py"
 tmux set-option -t "$SESSION" allow-passthrough on
+tmux set-option -t "$SESSION" mouse on
 
 # Wait until the session is confirmed alive instead of a fixed sleep
 for i in $(seq 1 40); do
