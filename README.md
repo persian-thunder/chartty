@@ -91,6 +91,6 @@ This enables synchronized output, which prevents the cursor from jumping between
 
 
 
-## License
+## License ( ◡̀_◡́)ᕤ
 
 MIT — Entroplay™ LLC
