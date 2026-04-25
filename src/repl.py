@@ -31,7 +31,6 @@ PRESETS = {
     "tri":     " ▴▵△▲",
     "matrix":  " ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵ",
     "hex":     " 0123456789ABCDEF",
-    "nike":    " ❯✔",
     "swoosh":  " ·∕╱⟩»❯➤✓✔",
     "photo":   " .,:;i1tfLCG08@",
 }
