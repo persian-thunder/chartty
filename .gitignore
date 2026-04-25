@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 
-# generated at runtime — not needed in repo
+# generated at runtime
 config/shader.py
 
 # tooling
