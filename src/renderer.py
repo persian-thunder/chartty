@@ -25,7 +25,6 @@ HIDE = "\033[?25l"
 SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
-BG_BLACK = "\033[48;2;0;0;0m"
 
 # detect terminal
 _TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
@@ -41,7 +40,7 @@ if not _TERM_PROGRAM:
 _USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
 
 # use 24-bit color in GPU-acceelerated envs
-_USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty")
+_USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty") and not _IN_TMUX
 
 # hroughput budget (bytes/sec) after every frame we sleep long enough that our
 # average write rate never exceeds set value
@@ -116,7 +115,12 @@ def hsv(h, s, v):
     return int(r*255), int(g*255), int(b*255)
 
 def _rgb_to_8bit(r, g, b):
-    """Map 24-bit RGB to the nearest xterm-256 colour index (16–231 cube)."""
+    """Map 24-bit RGB to the nearest xterm-256 colour index."""
+    # Near-grays route to the grayscale ramp (232-255) instead of the cube,
+    # since some terminal themes (e.g. Catppuccin) repaint cube origin 16 as a non-black colour.
+    if abs(r - g) < 12 and abs(g - b) < 12 and abs(r - b) < 12:
+        avg = (r + g + b) // 3
+        return 232 + min(23, max(0, (avg - 8) // 10))
     ri = round(r / 255.0 * 5)
     gi = round(g / 255.0 * 5)
     bi = round(b / 255.0 * 5)
@@ -198,11 +202,11 @@ def make_lut(name):
         else:
             r, g, b = hsv(n * 0.85, 1.0, 1.0)
         if _TERM_PROGRAM == "Apple_Terminal":
-            lut.append(_nearest_ansi(r, g, b) + "\033[40m")
+            lut.append(_nearest_ansi(r, g, b))
         elif _USE_24BIT:
-            lut.append(f"\033[38;2;{r};{g};{b};48;2;0;0;0m")
+            lut.append(f"\033[38;2;{r};{g};{b}m")
         else:
-            lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)};48;5;0m")
+            lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)}m")
     return lut
 
 # ── shader loader ──────────────────────────────────────────────────────────────
@@ -307,7 +311,7 @@ err      = None
 
 _refresh_lut_chars()
 
-sys.stdout.buffer.write((HIDE + BG_BLACK + CLEAR).encode("utf-8"))
+sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time   = time.monotonic()
