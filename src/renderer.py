@@ -40,7 +40,7 @@ if not _TERM_PROGRAM:
 _USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
 
 # use 24-bit color in GPU-acceelerated envs
-_USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty")
+_USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty") and not _IN_TMUX
 
 # hroughput budget (bytes/sec) after every frame we sleep long enough that our
 # average write rate never exceeds set value
@@ -115,7 +115,12 @@ def hsv(h, s, v):
     return int(r*255), int(g*255), int(b*255)
 
 def _rgb_to_8bit(r, g, b):
-    """Map 24-bit RGB to the nearest xterm-256 colour index (16–231 cube)."""
+    """Map 24-bit RGB to the nearest xterm-256 colour index."""
+    # Near-grays route to the grayscale ramp (232-255) instead of the cube,
+    # since some terminal themes (e.g. Catppuccin) repaint cube origin 16 as a non-black colour.
+    if abs(r - g) < 12 and abs(g - b) < 12 and abs(r - b) < 12:
+        avg = (r + g + b) // 3
+        return 232 + min(23, max(0, (avg - 8) // 10))
     ri = round(r / 255.0 * 5)
     gi = round(g / 255.0 * 5)
     bi = round(b / 255.0 * 5)
