@@ -72,7 +72,7 @@ BOILERPLATE_BOT = """    c = v
     return (v, c)
 """
 
-# ── examples (Python syntax) ──────────────────────────────────────────────────
+###### EXAMPLES ######
 EXAMPLES = [
     ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
                           "a = math.atan2(cy, cx)",
@@ -205,7 +205,7 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
-# ── startup ───────────────────────────────────────────────────────────────────
+###### HEADER, STARTUP ######
 write_shader()
 
 print()
@@ -227,7 +227,7 @@ print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
-# ── REPL loop ─────────────────────────────────────────────────────────────────
+####### REPL LOOP ######
 while True:
     try:
         raw = input(f"\n{GREEN}>{RESET} ").strip()
