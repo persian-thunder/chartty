@@ -6,8 +6,10 @@ SHADER     = os.path.join(_CONFIG, "shader.py")
 CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 
+### color palettes
 PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "neon", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
 
+### ascii charsets, add more here or type your own
 PRESETS = {
     "default": " ·:│▒█",
     "ascii":   " .:-=+*#%@",
@@ -35,6 +37,7 @@ PRESETS = {
     "photo":   " .,:;i1tfLCG08@",
 }
 
+###repl color code
 DIM    = "\033[2m"
 GREEN  = "\033[32m"
 RED    = "\033[31m"
@@ -72,7 +75,7 @@ BOILERPLATE_BOT = """    c = v
     return (v, c)
 """
 
-###### EXAMPLES ######
+###examples
 EXAMPLES = [
     ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
                           "a = math.atan2(cy, cx)",
@@ -95,9 +98,10 @@ EXAMPLES = [
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
 ]
 
+###preset examples
 SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
 
-# ── stored lines (Python expressions) ────────────────────────────────────────
+###acid grid default
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
 
@@ -205,7 +209,7 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
-###### HEADER, STARTUP ######
+###header, startup
 write_shader()
 
 print()
