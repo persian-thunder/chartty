@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(python3:*)",
+      "Bash(printf '#!/usr/bin/env bash\\\\nDIR=\"$\\(cd \"$\\(dirname \"$\\(readlink -f \"$0\" 2>/dev/null || echo \"$0\"\\)\"\\)\" && pwd\\)\"\\\\nSESSION=\"chartty\"\\\\nPYTHON=\"$DIR/.venv/bin/python3\"\\\\n\\\\ntmux kill-session -t $SESSION 2>/dev/null\\\\n\\\\ntmux new-session  -d -s $SESSION             \"$PYTHON $DIR/src/renderer.py\"\\\\ntmux split-window    -h -p 35 -t $SESSION    \"$PYTHON $DIR/src/repl.py\"\\\\n\\\\ntmux attach -t $SESSION\\\\n')",
+      "Bash(chmod +x /Users/armonnaeini/Desktop/livecode-repl/launch.sh)"
+    ]
+  }
+}

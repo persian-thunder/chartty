@@ -5,7 +5,6 @@ __pycache__/
 
 # generated at runtime — not needed in repo
 config/shader.py
-
-# tooling
-.claude/
+config/chars.txt
+config/palette.txt
 
