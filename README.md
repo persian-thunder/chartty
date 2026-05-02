@@ -59,7 +59,7 @@ chars kawaii    switch character set
 
 
 
-## Split view ⊟⊞
+## Layout ⊟⊞
 
 `chartty` runs inside a tmux session with two panes — the renderer and the REPL. Default layout is horizontal:
 

@@ -3,10 +3,10 @@ DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
 SESSION="chartty"
 PYTHON="$DIR/.venv/bin/python3"
 
-# Restore terminal state in case a previous tmux session left it in raw mode
+# restore terminal state
 stty sane 2>/dev/null || true
 
-# Kill any lingering session and wait for it to fully die before starting fresh
+# Kill all sessions first
 tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 0.15
 
@@ -19,7 +19,7 @@ tmux new-session -d -s "$SESSION" \
 tmux set-option -t "$SESSION" allow-passthrough on
 tmux set-option -t "$SESSION" mouse on
 
-# Wait until the session is confirmed alive instead of a fixed sleep
+# wait until session is live
 for i in $(seq 1 40); do
     tmux has-session -t "$SESSION" 2>/dev/null && break
     sleep 0.05

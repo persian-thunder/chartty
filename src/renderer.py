@@ -42,7 +42,7 @@ _USE_SYNC     = _TERM_PROGRAM not in ("Apple_Terminal",)
 # use 24-bit color in GPU-acceelerated envs
 _USE_24BIT = _TERM_PROGRAM in ("WezTerm", "kitty") and not _IN_TMUX
 
-# hroughput budget (bytes/sec) after every frame we sleep long enough that our
+# throughput budget (bytes/sec) after every frame we sleep long enough that our
 # average write rate never exceeds set value
 _BUDGET_BPS = (
     600_000    if _TERM_PROGRAM == "Apple_Terminal" else
@@ -52,10 +52,6 @@ _BUDGET_BPS = (
 
 # Synchronized Update Protocol (BSU/ESU, ?2026)
 # Tells the terminal: buffer this frame, render it atomically — eliminates tearing.
-# Problem: inside tmux, CSI sequences (\033[...) are consumed by tmux and never
-# reach the outer terminal (iTerm2, WezTerm, etc.).
-# Fix: wrap in DCS passthrough (\033Ptmux;\033\033[...ESC\\) so tmux forwards
-# the sequence verbatim to the outer terminal
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -69,9 +65,7 @@ RED   = "\033[31m"
 DIM   = "\033[2m"
 RESET = "\033[0m"
 
-# 16 basic ANSI foreground colours with their approximate RGB values.
-# Used for Apple Terminal where 8-bit escapes (10-12 bytes) are replaced by
-# these 5-6 byte sequences, cutting per-escape cost ~2×.
+# 16 basic ANSI foreground colours w/ RGB values (approximation)
 _ANSI16 = [
     ("\033[30m", (  0,   0,   0)),  # black
     ("\033[31m", (170,   0,   0)),  # dark red
@@ -107,7 +101,7 @@ def restore(sig=None, frame=None):
 signal.signal(signal.SIGINT,  restore)
 signal.signal(signal.SIGTERM, restore)
 
-# ── palettes ───────────────────────────────────────────────────────────────────
+######### palettes
 def hsv(h, s, v):
     h = h % 1.0; i = int(h * 6); f = h * 6 - i
     p, q, t2 = v*(1-s), v*(1-f*s), v*(1-(1-f)*s)
@@ -209,7 +203,7 @@ def make_lut(name):
             lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)}m")
     return lut
 
-# ── shader loader ──────────────────────────────────────────────────────────────
+######### shader loader 
 DEFAULT = """def value(x, y, t, cols, rows):
     cx = x - cols / 2
     cy = y - rows / 2
@@ -227,12 +221,12 @@ def load(path):
         exec(compile(f.read(), path, "exec"), ns)
     return ns["value"]
 
-# N_COLORS must match the number of distinct colour values the lut can produce.
-# Apple Terminal uses 16 ANSI colours; everything else uses 32 (8-bit or 24-bit).
+# N_COLORS must match the number of distinct colour values the lut can produce
+# Terminal: 16, all else: 32
 N_COLORS    = 16 if _TERM_PROGRAM == "Apple_Terminal" else 32
 _COLOR_STEP = 256 // N_COLORS
 
-# ── numpy arrays rebuilt only on resize / charset change ──────────────────────
+######### numpy arrays rebuilt only on resize / charset change
 _grid_shape = (0, 0)
 _X = _Y = None
 _chars_arr  = None   # (n_chars,) numpy string array for fast per-cell char lookup
@@ -247,7 +241,7 @@ def _refresh_lut_chars():
     global _chars_arr
     _chars_arr = np.array(list(CHARS))
 
-# ── render ─────────────────────────────────────────────────────────────────────
+######### render
 def render(fn, t, cols, rows):
     global _grid_shape, _X, _Y
 
@@ -256,7 +250,7 @@ def render(fn, t, cols, rows):
 
     _n = len(CHARS) - 1
 
-    # ── vectorised shader call ────────────────────────────────────────────
+    ######### vectorised shader call 
     try:
         V, C = fn(_X, _Y, t, cols, rows)
         V = np.clip(np.broadcast_to(np.asarray(V, dtype=np.float64), (rows, cols)), 0.0, 1.0)
@@ -300,7 +294,7 @@ def render(fn, t, cols, rows):
 
     return HOME + (RESET + "\n").join(rows_out) + RESET
 
-# ── init ───────────────────────────────────────────────────────────────────────
+######### init
 fn       = load(SHADER)
 mtime    = os.path.getmtime(SHADER)
 chars_mtime = 0
