@@ -7,7 +7,7 @@ CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 
 ### color palettes
-PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "neon", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
+PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
 
 ### ascii charsets, add more here or type your own
 PRESETS = {
