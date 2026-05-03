@@ -10,7 +10,7 @@ echo ""
 echo "  chartty installer"
 echo ""
 
-# ── python3 ───────────────────────────────────────────────────────────────────
+### python3
 if ! command -v python3 &>/dev/null; then
     echo -e "  ${RED}python3 not found${RESET}"
     echo ""
@@ -21,7 +21,7 @@ if ! command -v python3 &>/dev/null; then
 fi
 echo -e "  ${DIM}ok${RESET}   python3"
 
-# ── tmux ──────────────────────────────────────────────────────────────────────
+### tmux
 if ! command -v tmux &>/dev/null; then
     echo "  installing tmux..."
     if command -v brew &>/dev/null; then
@@ -39,7 +39,7 @@ if ! command -v tmux &>/dev/null; then
 fi
 echo -e "  ${DIM}ok${RESET}   tmux"
 
-# ── tmux sync (fixes cursor jump on large windows) ────────────────────────────
+### tmux sync (cursor jump fix)
 TMUX_CONF="$HOME/.tmux.conf"
 SYNC_LINE="set -as terminal-features ',*:sync'"
 if ! grep -qF "$SYNC_LINE" "$TMUX_CONF" 2>/dev/null; then
@@ -47,7 +47,7 @@ if ! grep -qF "$SYNC_LINE" "$TMUX_CONF" 2>/dev/null; then
 fi
 echo -e "  ${DIM}ok${RESET}   tmux sync"
 
-# ── virtual environment ───────────────────────────────────────────────────────
+### virtual environment
 VENV="$ROOT/.venv"
 if [ ! -d "$VENV" ]; then
     python3 -m venv "$VENV"
@@ -56,31 +56,31 @@ fi
 PIP="$VENV/bin/pip"
 echo -e "  ${DIM}ok${RESET}   venv"
 
-# ── numpy ─────────────────────────────────────────────────────────────────────
+### numpy
 "$PIP" install -q -r "$DIR/requirements.txt"
 echo -e "  ${DIM}ok${RESET}   numpy"
 
-# ── webcam (optional) ─────────────────────────────────────────────────────────
-echo ""
-read -r -p "  install webcam support? (~50MB) [y/N] " webcam
-if [[ "$webcam" =~ ^[Yy]$ ]]; then
-    if [[ "$OSTYPE" == "linux"* ]]; then
-        if ! python3 -c "import ctypes; ctypes.CDLL('libGL.so.1')" &>/dev/null; then
-            echo "  installing libgl1..."
-            if command -v apt-get &>/dev/null; then
-                sudo apt-get install -y libgl1 libglib2.0-0
-            elif command -v dnf &>/dev/null; then
-                sudo dnf install -y mesa-libGL
-            elif command -v pacman &>/dev/null; then
-                sudo pacman -S --noconfirm mesa
-            fi
-        fi
-    fi
-    "$PIP" install -q -r "$DIR/requirements-webcam.txt"
-    echo -e "  ${DIM}ok${RESET}   opencv-python-headless"
-fi
+### todo: webcam
+#echo ""
+#read -r -p "  install webcam support? (~50MB) [y/N] " webcam
+#if [[ "$webcam" =~ ^[Yy]$ ]]; then
+   # if [[ "$OSTYPE" == "linux"* ]]; then
+        #if ! python3 -c "import ctypes; ctypes.CDLL('libGL.so.1')" &>/dev/null; then
+           #echo "  installing libgl1..."
+            #if command -v apt-get &>/dev/null; then
+                #sudo apt-get install -y libgl1 libglib2.0-0
+            #elif command -v dnf &>/dev/null; then
+               # sudo dnf install -y mesa-libGL
+            #elif command -v pacman &>/dev/null; then
+               # sudo pacman -S --noconfirm mesa
+            #fi
+        #fi
+    #fi
+   # "$PIP" install -q -r "$DIR/requirements-webcam.txt"
+   # echo -e "  ${DIM}ok${RESET}   opencv-python-headless"
+#fi
 
-# ── chartty command ───────────────────────────────────────────────────────────
+### chartty command
 WRAPPER="#!/usr/bin/env bash
 exec \"$ROOT/launch.sh\" \"\$@\"
 "
