@@ -1,13 +1,11 @@
 import os, re, readline, subprocess, tempfile
+from palette import NAMES as PALETTES
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
 _CONFIG    = os.path.join(_SRC, "..", "config")
 SHADER     = os.path.join(_CONFIG, "shader.py")
 CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
-
-### color palettes
-PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
 
 ### ascii charsets, add more here or type your own
 PRESETS = {

@@ -1,5 +1,10 @@
 import math
 
+NAMES = [
+    "rainbow", "fire", "plasma", "green", "gold", "mono",
+    "fiesta", "acid", "acid2", "toxic", "lava", "electricity",
+]
+
 PALETTES = {
     "acid2": [
         (  0,   0,   0),
