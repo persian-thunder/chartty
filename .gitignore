@@ -10,3 +10,6 @@ config/palette.txt
 
 # macOS metadata
 .DS_Store
+
+#study notes
+notes/
