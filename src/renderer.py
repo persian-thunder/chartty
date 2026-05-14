@@ -1,5 +1,6 @@
 import math, sys, time, os, signal, types
 import numpy as np
+from palette import color
 
 # numpy drop-in
 _math_np = types.SimpleNamespace(
@@ -51,7 +52,7 @@ _BUDGET_BPS = (
 )
 
 # Synchronized Update Protocol (BSU/ESU, ?2026)
-# Tells the terminal: buffer this frame, render it atomically — eliminates tearing.
+# tells the terminal: buffer this frame, render it atomically — eliminates tearing
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -65,7 +66,7 @@ RED   = "\033[31m"
 DIM   = "\033[2m"
 RESET = "\033[0m"
 
-# 16 basic ANSI foreground colours w/ RGB values (approximation)
+# 16 basic ANSI foreground colours w/ RGB values (approx)
 _ANSI16 = [
     ("\033[30m", (  0,   0,   0)),  # black
     ("\033[31m", (170,   0,   0)),  # dark red
@@ -101,13 +102,6 @@ def restore(sig=None, frame=None):
 signal.signal(signal.SIGINT,  restore)
 signal.signal(signal.SIGTERM, restore)
 
-######### palettes
-def hsv(h, s, v):
-    h = h % 1.0; i = int(h * 6); f = h * 6 - i
-    p, q, t2 = v*(1-s), v*(1-f*s), v*(1-(1-f)*s)
-    r, g, b = [(v,t2,p),(q,v,p),(p,v,t2),(p,q,v),(t2,p,v),(v,p,q)][i % 6]
-    return int(r*255), int(g*255), int(b*255)
-
 def _rgb_to_8bit(r, g, b):
     """Map 24-bit RGB to the nearest xterm-256 colour index."""
     # Near-grays route to the grayscale ramp (232-255) instead of the cube,
@@ -125,76 +119,7 @@ def make_lut(name):
     lut = []
     for i in range(256):
         n = i / 255.0
-        if name == "green":
-            r, g, b = 0, int(30 + n*225), int(n*40)
-        elif name == "fire":
-            r = min(255, int(n*3*255)); g = min(255, max(0, int((n-.33)*3*255))); b = min(255, max(0, int((n-.66)*3*255)))
-        elif name == "rainbow":
-            r, g, b = hsv(n * 0.85, 1.0, 1.0)
-        elif name == "plasma":
-            r = int(128 + 127*math.sin(n*math.pi*2)); g = int(128 + 127*math.sin(n*math.pi*2+2.094)); b = int(128 + 127*math.sin(n*math.pi*2+4.189))
-        elif name == "gold":
-            r = min(255, int(n*2*255)); g = int(n*180); b = int(n*20)
-        elif name == "mono":
-            r = g = b = int(n * 255)
-        elif name == "acid":
-            h = 0.25 + 0.12 * math.sin(n * math.pi * 4)
-            r, g, b = hsv(h, 1.0, 0.2 + 0.8 * n)
-        elif name == "acid2":
-            colors = [
-                (  0,   0,   0),
-                (  7,  88,   0),
-                (137, 255,   0),
-                (200, 212, 138),
-                (253, 255,   0),
-            ]
-            segments = len(colors) - 1
-            pos = n * segments
-            lo  = min(int(pos), segments - 1)
-            hi  = lo + 1
-            t2  = pos - lo
-            r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
-            g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
-            b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
-        elif name == "fiesta":
-            colors = [
-                (255, 190,  11),  # amber gold
-                (251,  86,   7),  # blaze orange
-                (255,   0, 110),  # neon pink
-                (131,  56, 236),  # blue violet
-                ( 58, 134, 255),  # azure blue
-            ]
-            segments = len(colors) - 1
-            pos = n * segments
-            lo  = min(int(pos), segments - 1)
-            hi  = lo + 1
-            t2  = pos - lo
-            r   = int(colors[lo][0] + (colors[hi][0] - colors[lo][0]) * t2)
-            g   = int(colors[lo][1] + (colors[hi][1] - colors[lo][1]) * t2)
-            b   = int(colors[lo][2] + (colors[hi][2] - colors[lo][2]) * t2)
-        elif name == "toxic":
-            colors = [(0,0,0),(10,40,0),(60,180,0),(180,255,0),(220,255,50)]
-            segments = len(colors) - 1
-            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
-            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
-            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
-            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
-        elif name == "lava":
-            colors = [(0,0,0),(120,0,0),(255,40,0),(255,160,0),(255,255,200)]
-            segments = len(colors) - 1
-            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
-            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
-            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
-            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
-        elif name == "electricity":
-            colors = [(0,0,0),(20,0,80),(0,60,255),(100,200,255),(255,255,255)]
-            segments = len(colors) - 1
-            pos = n * segments; lo = min(int(pos), segments-1); hi = lo+1; t2 = pos-lo
-            r = int(colors[lo][0]+(colors[hi][0]-colors[lo][0])*t2)
-            g = int(colors[lo][1]+(colors[hi][1]-colors[lo][1])*t2)
-            b = int(colors[lo][2]+(colors[hi][2]-colors[lo][2])*t2)
-        else:
-            r, g, b = hsv(n * 0.85, 1.0, 1.0)
+        r, g, b = color(name, n)
         if _TERM_PROGRAM == "Apple_Terminal":
             lut.append(_nearest_ansi(r, g, b))
         elif _USE_24BIT:
