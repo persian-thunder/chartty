@@ -207,6 +207,22 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
+### show existing shader code
+def cmd_list(arg):
+    show()
+
+### show examples
+def cmd_examples(arg):
+    show_examples()
+
+### open editor
+def cmd_edit(arg):
+    open_editor()
+
+### toggle layout
+def cmd_layout(arg):
+    toggle_layout()
+
 ###header, startup
 write_shader()
 
