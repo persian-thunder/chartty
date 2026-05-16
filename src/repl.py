@@ -207,7 +207,7 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
-### show existing shader code
+### show current shader code
 def cmd_list(arg):
     show()
 
@@ -222,6 +222,31 @@ def cmd_edit(arg):
 ### toggle layout
 def cmd_layout(arg):
     toggle_layout()
+
+### clear canvas
+def cmd_clear(arg):
+    global lines
+    lines = ["v = 0.0"]
+    write_shader()
+    show()
+
+### undo most recent change
+def cmd_undo(arg):
+    if len(lines) > 1:
+        lines.pop()
+    write_shader()
+    show()
+
+###set palette
+def cmd_palette(arg):
+    if arg in PALETTES:
+        set_palette(arg)
+    elif arg == "":
+        print(f"{DIM}  palettes:{RESET}")
+        for p in PALETTES:
+            print(f"{DIM}    palette {p}{RESET}")
+    else:
+        print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
 
 ###header, startup
 write_shader()
@@ -274,14 +299,6 @@ while True:
         open_editor()
     elif raw.startswith("palette"):
         arg = raw[7:].strip()
-        if arg in PALETTES:
-            set_palette(arg)
-        elif arg == "":
-            print(f"{DIM}  palettes:{RESET}")
-            for p in PALETTES:
-                print(f"{DIM}    palette {p}{RESET}")
-        else:
-            print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
     elif raw.startswith("chars"):
         arg = raw[5:].strip()
         if arg in PRESETS:
