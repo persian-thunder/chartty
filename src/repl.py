@@ -99,10 +99,11 @@ EXAMPLES = [
 ###preset examples
 SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
 
-###acid grid default
+###default animation = acid grid grid
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
 
+###default layout = horizontal
 _layout = "horizontal"
 
 def toggle_layout():
@@ -207,6 +208,8 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
+
+### ### COMMAND DEFINITIONS ### ###
 ### show current shader code
 def cmd_list(arg):
     show()
@@ -257,6 +260,11 @@ def cmd_chars(arg):
     else:
         print(f"{DIM}  presets: {' '.join(PRESETS)}{RESET}")
 
+###all commands
+COMMANDS = {
+    "list": cmd_list, "clear": cmd_clear, "undo": cmd_undo, "examples": cmd_examples, "edit": cmd_edit, "layout": cmd_layout, "palette": cmd_palette, "chars": cmd_chars,
+}
+
 ###header, startup
 write_shader()
 
@@ -279,7 +287,7 @@ print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
-####### REPL LOOP ######
+###### REPL LOOP ######
 while True:
     try:
         raw = input(f"\n{GREEN}>{RESET} ").strip()
@@ -308,6 +316,7 @@ while True:
         open_editor()
     elif raw.startswith("palette"):
         arg = raw[7:].strip()
+        cmd_palette(arg)
     elif raw.startswith("chars"):
         arg = raw[5:].strip()
         if arg in PRESETS:
