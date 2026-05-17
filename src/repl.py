@@ -248,6 +248,15 @@ def cmd_palette(arg):
     else:
         print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
 
+###set charset
+def cmd_chars(arg):
+    if arg in PRESETS:
+        set_chars(PRESETS[arg])
+    elif len(arg) >= 2:
+        set_chars(arg)
+    else:
+        print(f"{DIM}  presets: {' '.join(PRESETS)}{RESET}")
+
 ###header, startup
 write_shader()
 
