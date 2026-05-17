@@ -297,37 +297,15 @@ while True:
 
     if not raw:
         continue
-    elif raw == "clear":
-        lines = ["v = 0.0"]
-        write_shader()
-        show()
-    elif raw == "undo":
-        if len(lines) > 1:
-            lines.pop()
-        write_shader()
-        show()
-    elif raw == "list":
-        show()
-    elif raw == "examples":
-        show_examples()
-    elif raw == "layout":
-        toggle_layout()
-    elif raw == "edit":
-        open_editor()
-    elif raw.startswith("palette"):
-        arg = raw[7:].strip()
-        cmd_palette(arg)
-    elif raw.startswith("chars"):
-        arg = raw[5:].strip()
-        if arg in PRESETS:
-            set_chars(PRESETS[arg])
-        elif len(arg) >= 2:
-            set_chars(arg)
-        else:
-            print(f"{DIM}  presets: {' '.join(PRESETS)}{RESET}")
-    elif raw.startswith("del "):
+
+    name, _, arg = raw.partition(" ")
+
+    if name in COMMANDS:
+        COMMANDS[name](arg)
+        
+    elif name == "del":
         try:
-            idx = int(raw[4:].strip())
+            idx = int(arg)
             if idx == 0 and len(lines) == 1:
                 print(f"{RED}  can't delete the only line{RESET}")
             elif 0 <= idx < len(lines):
@@ -346,16 +324,18 @@ while True:
                 print(f"{RED}  no line {idx}{RESET}")
         except ValueError:
             print(f"{RED}  usage: del <number>{RESET}")
+
     elif raw in SHORTCUTS:
-        name, ex_lines = EXAMPLES[SHORTCUTS[raw]]
+        ex_name, ex_lines = EXAMPLES[SHORTCUTS[raw]]
         lines = list(ex_lines)
         write_shader()
         ok, err = try_compile()
         if ok:
             show()
-            print(f"{DIM}  loaded: {name}{RESET}")
+            print(f"{DIM}  loaded: {ex_name}{RESET}")
         else:
             print(f"{RED}  {err}{RESET}")
+            
     else:
         lines.append(raw)
         write_shader()
