@@ -56,7 +56,7 @@ fi
 PIP="$VENV/bin/pip"
 echo -e "  ${DIM}ok${RESET}   venv"
 
-### numpy
+### python deps
 "$PIP" install -q -r "$DIR/requirements.txt"
 echo -e "  ${DIM}ok${RESET}   numpy"
 

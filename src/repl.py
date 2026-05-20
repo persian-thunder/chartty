@@ -1,4 +1,6 @@
-import os, re, readline, subprocess, tempfile
+import os, re, readline, subprocess
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
 from palette import NAMES as PALETTES
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
