@@ -176,32 +176,6 @@ def set_palette(name):
         f.write(name)
     print(f"{DIM}  palette → {name}{RESET}")
 
-def open_editor():
-    global lines
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write("\n".join(lines))
-        tmp = f.name
-    editor = os.environ.get("EDITOR", "nano")
-    subprocess.call([editor, tmp])
-    with open(tmp) as f:
-        raw = f.read()
-    os.unlink(tmp)
-    new_lines = [l.rstrip() for l in raw.splitlines()
-                 if l.strip() and not l.strip().startswith("#")]
-    if new_lines:
-        old_lines = list(lines)
-        lines = new_lines
-        write_shader()
-        ok, err = try_compile()
-        if ok:
-            show()
-        else:
-            lines = old_lines
-            write_shader()
-            try_compile()
-            print(f"{RED}  error: {err}{RESET}")
-    else:
-        print(f"{RED}  empty — keeping previous{RESET}")
 
 def show_examples():
     print(f"\n{DIM}── examples ───────────────────────────────────{RESET}")
@@ -222,6 +196,28 @@ def cmd_examples(arg):
 
 ### open editor
 def cmd_edit(arg):
+    global lines
+    original = list(lines)
+
+    kb = KeyBindings()
+
+    @kb.add("c-s")
+    def _(event):
+        event.app.exit(result="save")
+
+    @kb.add("c-c")
+    def _(event):
+        event.app.exit(result="cancel")
+
+    def on_change(buf):
+        global lines
+        candidate = [l for l in buf.text.split("\n") if l.strip()]
+        if not candidate:
+            return
+        snapshot = list(lines)
+        lines = candidate
+        write_shader()
+        ok, _err = try_compile()
     open_editor()
 
 ### toggle layout
