@@ -209,6 +209,7 @@ def cmd_edit(arg):
     def _(event):
         event.app.exit(result="cancel")
 
+    ### live edit
     def on_change(buf):
         global lines
         candidate = [l for l in buf.text.split("\n") if l.strip()]
