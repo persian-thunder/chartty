@@ -214,6 +214,7 @@ DEFAULT = """def value(x, y, t, cols, rows):
 
 def load(path):
     if not os.path.exists(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             f.write(DEFAULT)
     ns = {"math": _math_np}
