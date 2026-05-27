@@ -219,6 +219,9 @@ def cmd_edit(arg):
         lines = candidate
         write_shader()
         ok, _err = try_compile()
+        if not ok:
+            lines = snapshot
+            write_shader()
     open_editor()
 
 ### toggle layout
