@@ -222,7 +222,17 @@ def cmd_edit(arg):
         if not ok:
             lines = snapshot
             write_shader()
-    open_editor()
+
+    session = PromptSession(multiline=True, key_bindings=kb)
+    session.default_buffer.on_text_changed += on_change
+    result = session.prompt("", default="\n".join(lines))
+
+    if result == "cancel":
+        lines = original
+        write_shader()
+        print(f"{DIM}  reverted.{RESET}")
+    else:
+        print(f"{DIM}  saved.{RESET}")
 
 ### toggle layout
 def cmd_layout(arg):
@@ -284,7 +294,7 @@ print("  Commands")
 print(f"  {DIM}<enter>  = add line          undo    = remove last line{RESET}")
 print(f"  {DIM}list     = show code         clear   = reset{RESET}")
 print(f"  {DIM}palette  = show/set palette  chars   = show/set charset{RESET}")
-print(f"  {DIM}examples = show presets      edit    = open in $EDITOR{RESET}")
+print(f"  {DIM}examples = show presets      edit    = live-edit (^S save, ^C cancel){RESET}")
 print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
