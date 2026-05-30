@@ -49,6 +49,10 @@ echo -e "  ${DIM}ok${RESET}   tmux sync"
 
 ### virtual environment
 VENV="$ROOT/.venv"
+if [ -d "$VENV" ] && ! "$VENV/bin/python3" --version &>/dev/null; then
+    echo -e "  ${DIM}venv broken (project moved?), rebuilding${RESET}"
+    rm -rf "$VENV"
+fi
 if [ ! -d "$VENV" ]; then
     python3 -m venv "$VENV"
 fi
