@@ -223,12 +223,17 @@ def cmd_edit(arg):
             lines = snapshot
             write_shader()
 
-    session = PromptSession(multiline=True, key_bindings=kb)
+    session = PromptSession(
+        multiline=True,
+        key_bindings=kb,
+        prompt_continuation=lambda w, ln, soft: "  ",
+    )
     session.default_buffer.on_text_changed += on_change
     print(f"{DIM}  -- edit mode --{RESET}")
+    print()
     print(f"{DIM}  ^S save  ^C cancel  enter = newline  type to live-edit{RESET}")
-    
-    result = session.prompt("", default="\n".join(lines))
+
+    result = session.prompt("  ", default="\n".join(lines))
 
     if result == "cancel":
         lines = original
