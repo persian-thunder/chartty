@@ -42,7 +42,7 @@ undo            remove last line
 clear           reset to blank
 list            show current code
 del <n>         delete line n
-edit            open in $EDITOR
+edit            live-edit (^S save, ^C cancel)
 examples        show built-in presets
 wormhole        moiré wormhole
 acid            acid grid
@@ -55,7 +55,15 @@ palette fire    switch palette
 chars kawaii    switch character set
 ```
 
-**palettes:** `rainbow` `fire` `plasma` `green` `gold` `fiesta` `mono` `acid` `acid2` `toxic` `lava` `electricity`
+**Edit mode**
+
+`edit` opens a live-editor session over the current shaer. Type to mutate and every keystroke compiles and updates the canvas in real-time.
+
+- `^S` - save & exit
+- `^C` - cancel and revert to pre-edit sahder
+- `enter` - newline
+
+**Palettes:** `rainbow` `fire` `plasma` `green` `gold` `fiesta` `mono` `acid` `acid2` `toxic` `lava` `electricity`
 
 
 

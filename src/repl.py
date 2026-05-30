@@ -1,4 +1,7 @@
-import os, re, readline, subprocess, tempfile
+import os, re, readline, subprocess
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
+from palette import NAMES as PALETTES
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
 _CONFIG    = os.path.join(_SRC, "..", "config")
@@ -6,8 +9,7 @@ SHADER     = os.path.join(_CONFIG, "shader.py")
 CHARS_FILE = os.path.join(_CONFIG, "chars.txt")
 PAL_FILE   = os.path.join(_CONFIG, "palette.txt")
 
-PALETTES = ["rainbow", "fire", "plasma", "green", "gold", "neon", "mono", "fiesta", "acid", "acid2", "toxic", "lava", "electricity"]
-
+### ascii charsets, add more here or type your own
 PRESETS = {
     "default": " ·:│▒█",
     "ascii":   " .:-=+*#%@",
@@ -35,6 +37,7 @@ PRESETS = {
     "photo":   " .,:;i1tfLCG08@",
 }
 
+###repl color code
 DIM    = "\033[2m"
 GREEN  = "\033[32m"
 RED    = "\033[31m"
@@ -72,7 +75,7 @@ BOILERPLATE_BOT = """    c = v
     return (v, c)
 """
 
-###### EXAMPLES ######
+###examples
 EXAMPLES = [
     ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
                           "a = math.atan2(cy, cx)",
@@ -95,12 +98,14 @@ EXAMPLES = [
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
 ]
 
+###preset examples
 SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
 
-# ── stored lines (Python expressions) ────────────────────────────────────────
+###default animation = acid grid grid
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]
 
+###default layout = horizontal
 _layout = "horizontal"
 
 def toggle_layout():
@@ -171,32 +176,6 @@ def set_palette(name):
         f.write(name)
     print(f"{DIM}  palette → {name}{RESET}")
 
-def open_editor():
-    global lines
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write("\n".join(lines))
-        tmp = f.name
-    editor = os.environ.get("EDITOR", "nano")
-    subprocess.call([editor, tmp])
-    with open(tmp) as f:
-        raw = f.read()
-    os.unlink(tmp)
-    new_lines = [l.rstrip() for l in raw.splitlines()
-                 if l.strip() and not l.strip().startswith("#")]
-    if new_lines:
-        old_lines = list(lines)
-        lines = new_lines
-        write_shader()
-        ok, err = try_compile()
-        if ok:
-            show()
-        else:
-            lines = old_lines
-            write_shader()
-            try_compile()
-            print(f"{RED}  error: {err}{RESET}")
-    else:
-        print(f"{RED}  empty — keeping previous{RESET}")
 
 def show_examples():
     print(f"\n{DIM}── examples ───────────────────────────────────{RESET}")
@@ -205,7 +184,108 @@ def show_examples():
         for l in ex_lines:
             print(f"{DIM}    > {RESET}{_highlight(l)}")
 
-###### HEADER, STARTUP ######
+
+### ### COMMAND DEFINITIONS ### ###
+### show current shader code
+def cmd_list(arg):
+    show()
+
+### show examples
+def cmd_examples(arg):
+    show_examples()
+
+### open editor
+def cmd_edit(arg):
+    global lines
+    original = list(lines)
+
+    kb = KeyBindings()
+
+    @kb.add("c-s")
+    def _(event):
+        event.app.exit(result="save")
+
+    @kb.add("c-c")
+    def _(event):
+        event.app.exit(result="cancel")
+
+    ### live edit
+    def on_change(buf):
+        global lines
+        candidate = [l for l in buf.text.split("\n") if l.strip()]
+        if not candidate:
+            return
+        snapshot = list(lines)
+        lines = candidate
+        write_shader()
+        ok, _err = try_compile()
+        if not ok:
+            lines = snapshot
+            write_shader()
+
+    session = PromptSession(
+        multiline=True,
+        key_bindings=kb,
+        prompt_continuation=lambda w, ln, soft: "  ",
+    )
+    session.default_buffer.on_text_changed += on_change
+    print(f"{DIM}  -- edit mode --{RESET}")
+    print()
+    print(f"{DIM}  ^S save  ^C cancel  enter = newline  type to live-edit{RESET}")
+
+    result = session.prompt("  ", default="\n".join(lines))
+
+    if result == "cancel":
+        lines = original
+        write_shader()
+        print(f"{DIM}  reverted.{RESET}")
+    else:
+        print(f"{DIM}  saved.{RESET}")
+
+### toggle layout
+def cmd_layout(arg):
+    toggle_layout()
+
+### clear canvas
+def cmd_clear(arg):
+    global lines
+    lines = ["v = 0.0"]
+    write_shader()
+    show()
+
+### undo most recent change
+def cmd_undo(arg):
+    if len(lines) > 1:
+        lines.pop()
+    write_shader()
+    show()
+
+###set palette
+def cmd_palette(arg):
+    if arg in PALETTES:
+        set_palette(arg)
+    elif arg == "":
+        print(f"{DIM}  palettes:{RESET}")
+        for p in PALETTES:
+            print(f"{DIM}    palette {p}{RESET}")
+    else:
+        print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
+
+###set charset
+def cmd_chars(arg):
+    if arg in PRESETS:
+        set_chars(PRESETS[arg])
+    elif len(arg) >= 2:
+        set_chars(arg)
+    else:
+        print(f"{DIM}  presets: {' '.join(PRESETS)}{RESET}")
+
+###all commands
+COMMANDS = {
+    "list": cmd_list, "clear": cmd_clear, "undo": cmd_undo, "examples": cmd_examples, "edit": cmd_edit, "layout": cmd_layout, "palette": cmd_palette, "chars": cmd_chars,
+}
+
+###header, startup
 write_shader()
 
 print()
@@ -222,12 +302,12 @@ print("  Commands")
 print(f"  {DIM}<enter>  = add line          undo    = remove last line{RESET}")
 print(f"  {DIM}list     = show code         clear   = reset{RESET}")
 print(f"  {DIM}palette  = show/set palette  chars   = show/set charset{RESET}")
-print(f"  {DIM}examples = show presets      edit    = open in $EDITOR{RESET}")
+print(f"  {DIM}examples = show presets      edit    = live-edit (^S save, ^C cancel){RESET}")
 print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
-####### REPL LOOP ######
+###### REPL LOOP ######
 while True:
     try:
         raw = input(f"\n{GREEN}>{RESET} ").strip()
@@ -237,44 +317,15 @@ while True:
 
     if not raw:
         continue
-    elif raw == "clear":
-        lines = ["v = 0.0"]
-        write_shader()
-        show()
-    elif raw == "undo":
-        if len(lines) > 1:
-            lines.pop()
-        write_shader()
-        show()
-    elif raw == "list":
-        show()
-    elif raw == "examples":
-        show_examples()
-    elif raw == "layout":
-        toggle_layout()
-    elif raw == "edit":
-        open_editor()
-    elif raw.startswith("palette"):
-        arg = raw[7:].strip()
-        if arg in PALETTES:
-            set_palette(arg)
-        elif arg == "":
-            print(f"{DIM}  palettes:{RESET}")
-            for p in PALETTES:
-                print(f"{DIM}    palette {p}{RESET}")
-        else:
-            print(f"{RED}  unknown palette — try: {' '.join(PALETTES)}{RESET}")
-    elif raw.startswith("chars"):
-        arg = raw[5:].strip()
-        if arg in PRESETS:
-            set_chars(PRESETS[arg])
-        elif len(arg) >= 2:
-            set_chars(arg)
-        else:
-            print(f"{DIM}  presets: {' '.join(PRESETS)}{RESET}")
-    elif raw.startswith("del "):
+
+    name, _, arg = raw.partition(" ")
+
+    if name in COMMANDS:
+        COMMANDS[name](arg)
+        
+    elif name == "del":
         try:
-            idx = int(raw[4:].strip())
+            idx = int(arg)
             if idx == 0 and len(lines) == 1:
                 print(f"{RED}  can't delete the only line{RESET}")
             elif 0 <= idx < len(lines):
@@ -293,16 +344,18 @@ while True:
                 print(f"{RED}  no line {idx}{RESET}")
         except ValueError:
             print(f"{RED}  usage: del <number>{RESET}")
+
     elif raw in SHORTCUTS:
-        name, ex_lines = EXAMPLES[SHORTCUTS[raw]]
+        ex_name, ex_lines = EXAMPLES[SHORTCUTS[raw]]
         lines = list(ex_lines)
         write_shader()
         ok, err = try_compile()
         if ok:
             show()
-            print(f"{DIM}  loaded: {name}{RESET}")
+            print(f"{DIM}  loaded: {ex_name}{RESET}")
         else:
             print(f"{RED}  {err}{RESET}")
+            
     else:
         lines.append(raw)
         write_shader()

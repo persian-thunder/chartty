@@ -32,5 +32,8 @@ tmux split-window -h -p 35 -t "$SESSION" \
     -e "WEZTERM_EXECUTABLE=${WEZTERM_EXECUTABLE:-}" \
     "$PYTHON $DIR/src/repl.py"
 
+# keep REPL pane open on crash so the traceback stays visible
+tmux set-option -p -t "$SESSION" remain-on-exit on
+
 trap "tmux kill-session -t '$SESSION' 2>/dev/null" EXIT
 tmux attach -t "$SESSION"

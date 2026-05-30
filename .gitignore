@@ -8,3 +8,8 @@ config/shader.py
 config/chars.txt
 config/palette.txt
 
+# macOS metadata
+.DS_Store
+
+#study notes
+notes/
