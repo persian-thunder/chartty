@@ -225,6 +225,9 @@ def cmd_edit(arg):
 
     session = PromptSession(multiline=True, key_bindings=kb)
     session.default_buffer.on_text_changed += on_change
+    print(f"{DIM}  -- edit mode --{RESET}")
+    print(f"{DIM}  ^S save  ^C cancel  enter = newline  type to live-edit{RESET}")
+    
     result = session.prompt("", default="\n".join(lines))
 
     if result == "cancel":
