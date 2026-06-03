@@ -75,6 +75,25 @@ BOILERPLATE_BOT = """    c = v
     return (v, c)
 """
 
+###startup banner
+CHARTTY_BANNER = [
+    r"_____________________________________________",
+    r"_/___)(_)_(_)__/__\__(____\(____)(____)(_\/_)",
+    r"(_(____)___(__/(__)\__)___/__)(____)(___\__/_",
+    r"_\___)(_)_(_)(__)(__)(_)\_)_(__)__(__)__(__)_",
+]
+
+def print_banner():
+    top = (255, 158, 207)   # pastel pink
+    bot = (158, 236, 255)   # baby blue
+    n = len(CHARTTY_BANNER)
+    for i, line in enumerate(CHARTTY_BANNER):
+        t = i / (n - 1)
+        r = int(top[0] + (bot[0] - top[0]) * t)
+        g = int(top[1] + (bot[1] - top[1]) * t)
+        b = int(top[2] + (bot[2] - top[2]) * t)
+        print(f"\033[38;2;{r};{g};{b}m{line}\033[0m")
+
 ###examples
 EXAMPLES = [
     ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
@@ -288,9 +307,11 @@ COMMANDS = {
 ###header, startup
 write_shader()
 
+#print()
+print_banner()
 print()
-print(f" {ORANGE}˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖{RESET}  ")
-print()
+#print(f" {ORANGE}˖⁺ ·₊˚♥˚₊· ⁺˖ CHARTTY LIVE-CODE ASCII RENDERER ˖⁺ ·₊˚♥˚₊· ⁺˖{RESET}  ")
+#print()
 print("  Shader variables")
 print(f"  {DIM}(x,y)   pixel position   (cx,cy) = centered{RESET}")
 print(f"  {DIM}(t)     time             (cols,rows) terminal size{RESET}")
