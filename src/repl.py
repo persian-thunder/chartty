@@ -77,22 +77,29 @@ BOILERPLATE_BOT = """    c = v
 
 ###startup banner
 CHARTTY_BANNER = [
-    r"_____________________________________________",
-    r"_/___)(_)_(_)__/__\__(____\(____)(____)(_\/_)",
-    r"(_(____)___(__/(__)\__)___/__)(____)(___\__/_",
-    r"_\___)(_)_(_)(__)(__)(_)\_)_(__)__(__)__(__)_",
+    "₊ ⊙ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙ ₊ ⊙ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙ ₊ ⊙ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙",
+    " ██████╗██╗  ██╗ █████╗ ██████╗ ████████╗████████╗██╗   ██╗",
+    "██╔════╝██║  ██║██╔══██╗██╔══██╗╚══██╔══╝╚══██╔══╝╚██╗ ██╔╝",
+    "██║     ███████║███████║██████╔╝   ██║      ██║    ╚████╔╝ ",
+    "██║     ██╔══██║██╔══██║██╔══██╗   ██║      ██║     ╚██╔╝  ",
+    "╚██████╗██║  ██║██║  ██║██║  ██║   ██║      ██║      ██║   ",
+    " ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝      ╚═╝      ╚═╝   ",
+    "⊙ ₊ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙ ₊ ⊙ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙ ₊ ⊙ ♡ ✧ ✦ ♥ ✦ ✧ ♡ ⊙",
 ]
 
 def print_banner():
-    top = (255, 158, 207)   # pastel pink
-    bot = (158, 236, 255)   # baby blue
+    stops = [(255, 130, 200), (200, 150, 255), (130, 220, 255)]  # pink → lavender → baby blue
     n = len(CHARTTY_BANNER)
     for i, line in enumerate(CHARTTY_BANNER):
         t = i / (n - 1)
-        r = int(top[0] + (bot[0] - top[0]) * t)
-        g = int(top[1] + (bot[1] - top[1]) * t)
-        b = int(top[2] + (bot[2] - top[2]) * t)
-        print(f"\033[38;2;{r};{g};{b}m{line}\033[0m")
+        seg = t * (len(stops) - 1)
+        idx = min(int(seg), len(stops) - 2)
+        local_t = seg - idx
+        c0, c1 = stops[idx], stops[idx + 1]
+        r = int(c0[0] + (c1[0] - c0[0]) * local_t)
+        g = int(c0[1] + (c1[1] - c0[1]) * local_t)
+        b = int(c0[2] + (c1[2] - c0[2]) * local_t)
+        print(f"  \033[38;2;{r};{g};{b}m{line}\033[0m")
 
 ###examples
 EXAMPLES = [
@@ -139,6 +146,11 @@ def toggle_layout():
         print(f"{DIM}  layout → vertical (renderer top, editor bottom){RESET}")
     else:
         subprocess.call(["tmux", "select-layout", "even-horizontal"])
+        # even-horizontal resets to 50/50; re-pin this pane so CHARTTY never wraps
+        pane = os.environ.get("TMUX_PANE", "")
+        cols = os.environ.get("CHARTTY_REPL_COLS", "72")
+        if pane:
+            subprocess.call(["tmux", "resize-pane", "-t", pane, "-x", cols])
         _layout = "horizontal"
         print(f"{DIM}  layout → horizontal (renderer left, editor right){RESET}")
 
