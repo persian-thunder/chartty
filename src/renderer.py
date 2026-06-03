@@ -1,4 +1,4 @@
-import math, sys, time, os, signal, types
+import math, sys, time, os, signal, types, subprocess
 import numpy as np
 from palette import color
 
@@ -243,6 +243,10 @@ frame_count  = 0
 _last_elapsed  = FRAME_TIME
 _last_frame_kb = 0.0
 
+# periodically nudge tmux so any stuck resize state self-heals within REFRESH_INTERVAL seconds
+REFRESH_INTERVAL = 5.0
+_last_refresh    = time.monotonic()
+
 try:
     while True:
         frame_start = time.monotonic()
@@ -291,6 +295,18 @@ try:
                 pass
 
         frame_count += 1
+
+        if _IN_TMUX and (frame_start - _last_refresh) > REFRESH_INTERVAL:
+            _last_refresh = frame_start
+            try:
+                subprocess.run(
+                    ["tmux", "refresh-client"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=0.5,
+                )
+            except Exception:
+                pass
 
         try:
             cols, rows = os.get_terminal_size()
