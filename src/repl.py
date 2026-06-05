@@ -159,8 +159,11 @@ def write_shader():
     with open(SHADER, "w") as f:
         f.write(BOILERPLATE_TOP + body + BOILERPLATE_BOT)
 
-def try_compile():
+def try_compile(src=None):
     import types
+    if src is None:
+        with open(SHADER) as f:
+            src = f.read()
     try:
         import numpy as np
         _math_np = types.SimpleNamespace(
@@ -173,8 +176,7 @@ def try_compile():
             fmod=np.fmod, pi=np.pi, e=np.e, inf=np.inf,
         )
         ns = {"math": _math_np}
-        with open(SHADER) as f:
-            exec(compile(f.read(), SHADER, "exec"), ns)
+        exec(compile(src, SHADER, "exec"), ns)
         fn = ns["value"]
         X, Y = np.meshgrid(np.arange(80, dtype=float), np.arange(24, dtype=float))
         fn(X, Y, 0.0, 80, 24)
@@ -182,8 +184,7 @@ def try_compile():
         import math as _math
         ns = {"math": _math}
         try:
-            with open(SHADER) as f:
-                exec(compile(f.read(), SHADER, "exec"), ns)
+            exec(compile(src, SHADER, "exec"), ns)
             ns["value"](0, 0, 0.0, 80, 24)
         except Exception as e:
             return False, str(e)[:100]
@@ -229,6 +230,7 @@ def cmd_examples(arg):
 def cmd_edit(arg):
     global lines
     original = list(lines)
+    state = {"err": ""}      # holds the live compile error, if any
 
     kb = KeyBindings()
 
@@ -246,18 +248,23 @@ def cmd_edit(arg):
         candidate = [l for l in buf.text.split("\n") if l.strip()]
         if not candidate:
             return
-        snapshot = list(lines)
-        lines = candidate
-        write_shader()
-        ok, _err = try_compile()
-        if not ok:
-            lines = snapshot
-            write_shader()
+        src = BOILERPLATE_TOP + "".join("    " + l + "\n" for l in candidate) + BOILERPLATE_BOT
+        ok, err = try_compile(src)        # in-memory; nothing written yet
+        if ok:
+            lines = candidate
+            write_shader()                # only valid source ever hits disk
+            state["err"] = ""
+        else:
+            state["err"] = err            # keep last-good live; show WHY it's frozen
+
+    def toolbar():
+        return f" ✕ {state['err']}" if state["err"] else " ✓ live"
 
     session = PromptSession(
         multiline=True,
         key_bindings=kb,
         prompt_continuation=lambda w, ln, soft: "  ",
+        bottom_toolbar=toolbar,
     )
     session.default_buffer.on_text_changed += on_change
     print(f"{DIM}  -- edit mode --{RESET}")
