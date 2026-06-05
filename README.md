@@ -21,7 +21,7 @@ bash install/install.sh
 
 `chartty` opens two panes. Left is renderer, right is live editor.
 
-Type trigonometric functions, press enter, generate beautiful textures.
+Type trigonometric functions, press enter, generate sexy textures.
 
 
 | Variable | Usage |
