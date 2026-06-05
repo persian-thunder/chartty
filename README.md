@@ -69,7 +69,7 @@ chars kawaii    switch character set
 
 ## Layout ⊟⊞
 
-`chartty` runs inside a tmux session with two panes — the renderer and the REPL. Default layout is horizontal:
+`chartty` runs inside a tmux session with two panes: the renderer and the REPL. Default layout is horizontal:
 
 Type `layout` in the REPL to flip between:
 
