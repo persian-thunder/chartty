@@ -19,9 +19,9 @@ bash install/install.sh
 
 ## Usage ✎ᝰ.ᐟ⋆⑅˚₊
 
-`chartty` opens two panes. Left is renderer, right is live editor.
+`chartty` opens two panes: left is renderer, right is live-editor
 
-Type trigonometric functions, press enter, generate sexy textures.
+Type trigonometric functions, press enter, generate ASCII textures :3
 
 
 | Variable | Usage |
@@ -80,7 +80,8 @@ Type `layout` in the REPL to flip between:
 
 ## How does it work ( •᷄‎ࡇ•᷅ )
 
-The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`. Math runs over entire pixel grid once per frame.
+1. The renderer calls your *shader* function once per frame, passing numpy arrays for `x` and `y`
+2. Math then runs over entire pixel grid once per frame
 
 ```
 repl.py        →   shader.py   →   renderer.py
