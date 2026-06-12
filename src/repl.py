@@ -179,7 +179,8 @@ def try_compile(src=None):
         exec(compile(src, SHADER, "exec"), ns)
         fn = ns["value"]
         X, Y = np.meshgrid(np.arange(80, dtype=float), np.arange(24, dtype=float))
-        fn(X, Y, 0.0, 80, 24)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            fn(X, Y, 0.0, 80, 24)
     except ImportError:
         import math as _math
         ns = {"math": _math}
