@@ -5,6 +5,7 @@ NAMES = [
     "fiesta", "acid", "acid2", "toxic", "lava", "electricity",
 ]
 
+# specific color palette defintion
 PALETTES = {
     "acid2": [
         (  0,   0,   0),
