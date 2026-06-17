@@ -1,6 +1,6 @@
 # chartty (𖦹﹏𖦹;)
 
-Live-code ASCII  renderer in your terminal. Trigonomatry is your best friend here (｡•̀ᴗ-)✧ 
+Live-code ASCII renderer in your terminal. Trigonomatry is your best friend (｡•̀ᴗ-)✧ 
 
 ```
 v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)
@@ -19,9 +19,9 @@ bash install/install.sh
 
 ## Usage ✎ᝰ.ᐟ⋆⑅˚₊
 
-`chartty` opens two panes: left is renderer, right is live-editor
+`chartty` opens two panes: left is renderer, right is live-code-editor
 
-Type trigonometric functions, press enter, generate ASCII textures :3
+Type trig functions, press enter, generate textures rendered with ASCII chars :3
 
 
 | Variable | Usage |
@@ -57,7 +57,7 @@ chars kawaii    switch character set
 
 **Edit mode**
 
-`edit` opens a live-editor session over the current shaer. Type to mutate and every keystroke compiles and updates the canvas in real-time.
+`edit` opens a live-editor session over the current shader. Type to mutate and every keystroke will compile and update the canvas in real-time
 
 - `^S` - save & exit
 - `^C` - cancel and revert to pre-edit sahder
@@ -69,7 +69,7 @@ chars kawaii    switch character set
 
 ## Layout ⊟⊞
 
-`chartty` runs inside a tmux session with two panes: the renderer and the REPL. Default layout is horizontal:
+`chartty` runs inside a tmux session with two panes: the renderer and the REPL. Default layout = horizontal
 
 Type `layout` in the REPL to flip between:
 
