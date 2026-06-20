@@ -154,6 +154,24 @@ def toggle_layout():
         _layout = "horizontal"
         print(f"{DIM}  layout → horizontal (renderer left, editor right){RESET}")
 
+_editor_hidden = False
+
+def toggle_editor():
+    global _editor_hidden
+    if not os.environ.get("TMUX", ""):
+        print(f"{RED} not inside tmux{RESET}")
+        return
+    pane = os.environ.get("TMUX_PANE", "")
+    full = os.environ.get("CHARTTY_REPL_COLS", "72") #width to restore to
+    if _editor_hidden:
+        subprocess.call(["tmux", "resize-pane", "-t", pane, "-x", full])
+        _editor_hidden = False
+        print(f"{DIM} editor -> shown{RESET}")
+    else:
+        subprocess.call(["tmux", "resize-pane", "-t", pane, "-x", "8"])
+        _editor_hidden = True
+        print(f"{DIM} editor -> hidden{RESET}")
+
 def write_shader():
     body = "".join("    " + l + "\n" for l in lines)
     with open(SHADER, "w") as f:
@@ -285,6 +303,9 @@ def cmd_edit(arg):
 def cmd_layout(arg):
     toggle_layout()
 
+def cmd_editor(arg):
+    toggle_editor()
+
 ### clear canvas
 def cmd_clear(arg):
     global lines
@@ -321,7 +342,7 @@ def cmd_chars(arg):
 
 ###all commands
 COMMANDS = {
-    "list": cmd_list, "clear": cmd_clear, "undo": cmd_undo, "examples": cmd_examples, "edit": cmd_edit, "layout": cmd_layout, "palette": cmd_palette, "chars": cmd_chars,
+    "list": cmd_list, "clear": cmd_clear, "undo": cmd_undo, "examples": cmd_examples, "edit": cmd_edit, "layout": cmd_layout, "palette": cmd_palette, "chars": cmd_chars, "editor": cmd_editor,
 }
 
 ###header, startup
