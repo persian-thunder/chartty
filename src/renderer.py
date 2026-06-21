@@ -1,4 +1,4 @@
-import math, sys, time, os, signal, types, subprocess
+import math, sys, time, os, signal, types, subprocess, select, re, termios, tty
 import numpy as np
 from palette import color
 
@@ -26,6 +26,9 @@ HIDE = "\033[?25l"
 SHOW = "\033[?25h"
 CLEAR = "\033[2J"
 HOME  = "\033[H"
+# mouse/touch reporting: ?1003 = report all motion, ?1006 = SGR extended coords
+MOUSE_ON  = "\033[?1003h\033[?1006h"
+MOUSE_OFF = "\033[?1003l\033[?1006l"
 
 # detect terminal
 _TERM_PROGRAM = os.environ.get("TERM_PROGRAM", "")
@@ -95,12 +98,56 @@ def _nearest_ansi(r, g, b):
     return best_esc
 
 def restore(sig=None, frame=None):
-    sys.stdout.write(SHOW + RESET + "\n")
+    try:
+        if _old_termios is not None:
+            termios.tcsetattr(_stdin_fd, termios.TCSADRAIN, _old_termios)
+    except Exception:
+        pass
+    sys.stdout.write(MOUSE_OFF + SHOW + RESET + "\n")
     sys.stdout.flush()
     sys.exit(0)
 
 signal.signal(signal.SIGINT,  restore)
 signal.signal(signal.SIGTERM, restore)
+
+# ── mouse / touch state ──
+# SGR mouse reports arrive as: ESC [ < btn ; col ; row (M=press/motion, m=release)
+_MOUSE_RE = re.compile(r"\033\[<(\d+);(\d+);(\d+)([Mm])")
+mouse_x = -1.0     # current touch position in cell coords; -1 = nothing yet
+mouse_y = -1.0
+mouse_down = False
+mouse_press_t = -1.0   # value of t at the moment the current press began
+
+_stdin_fd = sys.stdin.fileno()
+try:
+    _old_termios = termios.tcgetattr(_stdin_fd)   # save to restore on exit
+except Exception:
+    _old_termios = None                            # stdin isn't a tty (e.g. piped)
+
+def poll_mouse():
+    """Drain whatever is waiting on stdin and update mouse state. Non-blocking."""
+    global mouse_x, mouse_y, mouse_down, mouse_press_t
+    try:
+        ready, _, _ = select.select([sys.stdin], [], [], 0)
+    except Exception:
+        return
+    if not ready:
+        return
+    try:
+        data = os.read(_stdin_fd, 4096).decode("latin-1", "ignore")
+    except Exception:
+        return
+    for m in _MOUSE_RE.finditer(data):
+        btn, col, row, kind = m.groups()
+        mouse_x = float(int(col) - 1)   # terminal coords are 1-based; cells are 0-based
+        mouse_y = float(int(row) - 1)
+        if kind == "m":                              # button released
+            mouse_down = False
+        else:                                        # 'M' = press or motion
+            held = (int(btn) & 3) != 3               # low 2 bits == 3 means no button (hover)
+            if held and not mouse_down:              # genuine rising edge → record press
+                mouse_press_t = time.monotonic() - start_time
+            mouse_down = held
 
 def _rgb_to_8bit(r, g, b):
     """Map 24-bit RGB to the nearest xterm-256 colour index."""
@@ -142,7 +189,7 @@ def load(path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             f.write(DEFAULT)
-    ns = {"math": _math_np}
+    ns = {"math": _math_np, "mx": -1.0, "my": -1.0, "mdown": False, "mtime": -1.0}
     with open(path) as f:
         exec(compile(f.read(), path, "exec"), ns)
     return ns["value"]
@@ -231,7 +278,12 @@ err      = None
 
 _refresh_lut_chars()
 
-sys.stdout.buffer.write((HIDE + CLEAR).encode("utf-8"))
+if _old_termios is not None:
+    try:
+        tty.setcbreak(_stdin_fd)
+    except Exception:
+        pass
+sys.stdout.buffer.write((MOUSE_ON + HIDE + CLEAR).encode("utf-8"))
 sys.stdout.buffer.flush()
 
 start_time   = time.monotonic()
@@ -251,6 +303,13 @@ try:
     while True:
         frame_start = time.monotonic()
         t = frame_start - start_time
+
+        # read touches and expose them to the shader as mx / my / mdown
+        poll_mouse()
+        fn.__globals__["mx"] = mouse_x
+        fn.__globals__["my"] = mouse_y
+        fn.__globals__["mdown"] = mouse_down
+        fn.__globals__["mtime"] = mouse_press_t
 
         if frame_count % POLL_EVERY == 0:
             # reload shader on file change
@@ -319,8 +378,9 @@ try:
         render_ms = (time.monotonic() - render_start) * 1000
 
         fps = 1.0 / _last_elapsed
+        touch = f"  touch=({mouse_x:.0f},{mouse_y:.0f})" if mouse_down else ""
         status = (RED + f" ✕  {err}"[:cols].ljust(cols) + RESET) if err else \
-                 (DIM + f" ●  {pal_name}  {cols}×{rows}  {fps:.0f}fps  {_last_frame_kb:.0f}KB  render={render_ms:.1f}ms".ljust(cols) + RESET)
+                 (DIM + (f" ●  {pal_name}  {cols}×{rows}  {fps:.0f}fps  {_last_frame_kb:.0f}KB  render={render_ms:.1f}ms{touch}")[:cols].ljust(cols) + RESET)
 
         try:
             data = (BSU + HIDE + frame_body + f"\033[{rows+1};1H" + status + "\033[1;1H" + ESU).encode("utf-8")
@@ -339,5 +399,10 @@ try:
         if sleep_time > 0:
             time.sleep(sleep_time)
 finally:
-    sys.stdout.buffer.write(SHOW.encode("utf-8"))
+    try:
+        if _old_termios is not None:
+            termios.tcsetattr(_stdin_fd, termios.TCSADRAIN, _old_termios)
+    except Exception:
+        pass
+    sys.stdout.buffer.write((MOUSE_OFF + SHOW).encode("utf-8"))
     sys.stdout.buffer.flush()

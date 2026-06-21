@@ -103,25 +103,43 @@ def print_banner():
 
 ###examples
 EXAMPLES = [
-    ("moiré wormhole",   ["r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
+    ("moiré wormhole",   ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
                           "a = math.atan2(cy, cx)",
                           "v = math.sin(r / 4.0 - t * 5.0) * math.sin(a * 7.0 + t * 1.5)",
                           "v += 0.5 * math.sin(r / 2.0 - t * 3.0) * math.sin(a * 13.0 - t * 0.7)",
                           "v = v * 0.5 + 0.5",
                           "c = math.sin(a * 3.0 + r / 4.0 - t * 2.0) * 0.5 + 0.5"]),
     ("acid grid",        ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
-                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
-    ("breathing spiral", ["v = math.sin(math.atan2(cy, cx) * 5.0 - math.sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0)"]),
-    ("zoom tunnel",      ["r = math.sqrt(cx*cx + cy*cy) + 0.001",
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "v += math.sin(fr * 0.7 - t * 6.0) * math.exp(-fr * 0.08) if mdown else 0.0"]),
+    ("breathing spiral", ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "v = math.sin(math.atan2(cy, cx) * 5.0 - math.sqrt(cx*cx + cy*cy) / 3.0 + t * 2.0)"]),
+    ("zoom tunnel",      ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "r = math.sqrt(cx*cx + cy*cy) + 0.001",
                           "v = math.sin(10.0 / r - t * 4.0) * math.sin(math.atan2(cy, cx) * 3.0)"]),
     ("glitch ripple",    ["v = math.sin(x / 4.0 + math.sin(t + y / 20.0) * 10.0)",
                           "v += math.sin(y / 2.0 - t * 2.0) * 0.5",
-                          "v = math.sin(v * math.pi * 2.0)"]),
+                          "v = math.sin(v * math.pi * 2.0)",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "v += math.sin(fr * 0.7 - t * 6.0) * math.exp(-fr * 0.08) if mdown else 0.0"]),
     ("groove",           ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
                           "v = math.sin(x / 3.0 + math.sin(y /4.0 + t))",
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
-                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))"]),
+                          "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "v += math.sin(fr * 0.7 - t * 6.0) * math.exp(-fr * 0.08) if mdown else 0.0"]),
 ]
 
 ###preset examples
@@ -168,7 +186,7 @@ def toggle_editor():
         _editor_hidden = False
         print(f"{DIM} editor -> shown{RESET}")
     else:
-        subprocess.call(["tmux", "resize-pane", "-t", pane, "-x", "8"])
+        subprocess.call(["tmux", "resize-pane", "-t", pane, "-x", "2"])
         _editor_hidden = True
         print(f"{DIM} editor -> hidden{RESET}")
 
@@ -193,7 +211,7 @@ def try_compile(src=None):
             hypot=np.hypot, sinh=np.sinh, cosh=np.cosh, tanh=np.tanh,
             fmod=np.fmod, pi=np.pi, e=np.e, inf=np.inf,
         )
-        ns = {"math": _math_np}
+        ns = {"math": _math_np, "mx": -1.0, "my": -1.0, "mdown": False, "mtime": -1.0}
         exec(compile(src, SHADER, "exec"), ns)
         fn = ns["value"]
         X, Y = np.meshgrid(np.arange(80, dtype=float), np.arange(24, dtype=float))

@@ -24,6 +24,11 @@ tmux set-option -t "$SESSION" mouse on
 tmux set-option -t "$SESSION" aggressive-resize on
 tmux set-option -t "$SESSION" focus-events on
 
+# clicking a pane that has mouse reporting on (the renderer) forwards the click to
+# it WITHOUT stealing keyboard focus — so you can finger-paint the canvas while
+# still typing in the REPL. Panes without mouse mode (the REPL) select as normal.
+tmux bind-key -n MouseDown1Pane if-shell -F "#{mouse_any_flag}" "send-keys -M" "select-pane -t ="
+
 # wait until session is live
 for i in $(seq 1 40); do
     tmux has-session -t "$SESSION" 2>/dev/null && break
