@@ -55,7 +55,7 @@ _BUDGET_BPS = (
 )
 
 # Synchronized Update Protocol (BSU/ESU, ?2026)
-# tells the terminal: buffer this frame, render it atomically — eliminates tearing
+# prevents tearing
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -89,13 +89,13 @@ _ANSI16 = [
     ("\033[97m", (255, 255, 255)),  # white
 ]
 
+# round ot nearest in 16 color set
 def _nearest_ansi(r, g, b):
-    best_esc, best_d = _ANSI16[0][0], float("inf")
-    for esc, (ar, ag, ab) in _ANSI16:
-        d = (r-ar)**2 + (g-ag)**2 + (b-ab)**2
-        if d < best_d:
-            best_d, best_esc = d, esc
-    return best_esc
+    def distance(entry):
+        esc, (ar, ag, ab) = entry
+        return (r-ar)**2 + (g-ag)**2 + (b-ab)**2
+    esc, rgb = min(_ANSI16, key=distance)
+    return esc
 
 def restore(sig=None, frame=None):
     try:
@@ -110,7 +110,7 @@ def restore(sig=None, frame=None):
 signal.signal(signal.SIGINT,  restore)
 signal.signal(signal.SIGTERM, restore)
 
-# ── mouse / touch state ──
+# mouse/touch state
 # SGR mouse reports arrive as: ESC [ < btn ; col ; row (M=press/motion, m=release)
 _MOUSE_RE = re.compile(r"\033\[<(\d+);(\d+);(\d+)([Mm])")
 mouse_x = -1.0     # current touch position in cell coords; -1 = nothing yet
@@ -163,17 +163,13 @@ def _rgb_to_8bit(r, g, b):
 
 # build color lookup table
 def make_lut(name):
-    lut = []
-    for i in range(256):
-        n = i / 255.0
-        r, g, b = color(name, n)
-        if _TERM_PROGRAM == "Apple_Terminal":
-            lut.append(_nearest_ansi(r, g, b))
-        elif _USE_24BIT:
-            lut.append(f"\033[38;2;{r};{g};{b}m")
-        else:
-            lut.append(f"\033[38;5;{_rgb_to_8bit(r,g,b)}m")
-    return lut
+    if _TERM_PROGRAM == "Apple_Terminal":
+        encode = lambda r, g, b: _nearest_ansi(r, g, b)
+    elif _USE_24BIT:
+        encode = lambda r, g, b: f"\033[38;2;{r};{g};{b}m"
+    else:
+        encode = lambda r, g, b: f"\033[38;5;{_rgb_to_8bit(r,g,b)}m"
+    return [encode(*color(name, i / 255.0)) for i in range(256)]
 
 ######### shader loader 
 DEFAULT = """def value(x, y, t, cols, rows):
@@ -186,16 +182,15 @@ DEFAULT = """def value(x, y, t, cols, rows):
 
 def load(path):
     if not os.path.exists(path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True) #make folder if missing
         with open(path, "w") as f:
-            f.write(DEFAULT)
+            f.write(DEFAULT) #write with default shader texxt
     ns = {"math": _math_np, "mx": -1.0, "my": -1.0, "mdown": False, "mtime": -1.0}
     with open(path) as f:
-        exec(compile(f.read(), path, "exec"), ns)
-    return ns["value"]
+        exec(f.read(), ns)
+    return ns["value"] #render() calls this
 
-# N_COLORS must match the number of distinct colour values the lut can produce
-# Terminal: 16, all else: 32
+# N_COLORS = # of distint color levels, 16 for terminal, 32 for all else
 N_COLORS    = 16 if _TERM_PROGRAM == "Apple_Terminal" else 32
 _COLOR_STEP = 256 // N_COLORS
 
@@ -243,10 +238,9 @@ def render(fn, t, cols, rows):
                 except Exception:
                     pass
 
-    # ── delta-encoded output: emit color escape only on color transitions ──
-    # Precompute full char grid with numpy (one vectorised index, no per-cell Python).
-    # Python loop runs only over color-change boundaries — far fewer iterations
-    # than cells, especially with quantised colors creating multi-cell runs.
+    # delta-encoded output: emit color escape only on color transitions
+    # Precompute full char grid with numpy (one vectorised index, no per-cell Python)
+    # checks for per-cell difference, loops only on color-changes, faster render
     vi_chars = _chars_arr[vi]   # (rows, cols) array of single-char strings
     rows_out = []
     for y in range(rows):
@@ -268,6 +262,8 @@ def render(fn, t, cols, rows):
     return HOME + (RESET + "\n").join(rows_out) + RESET
 
 ######### init
+# on first boot -> calls load(SHADER)
+# render loop calls (V, C = fn(...)) every frame
 fn       = load(SHADER)
 mtime    = os.path.getmtime(SHADER)
 chars_mtime = 0
@@ -290,7 +286,7 @@ start_time   = time.monotonic()
 # max-FPS ceiling - the throughput budget (_BUDGET_BPS) will push this lower
 # automatically when frames are large (big window)
 FRAME_TIME   = 1.0 / 8.0 if _TERM_PROGRAM == "Apple_Terminal" else 1.0 / 30.0
-POLL_EVERY   = 3
+POLL_EVERY   = 3 # frames to skip
 frame_count  = 0
 _last_elapsed  = FRAME_TIME
 _last_frame_kb = 0.0
@@ -311,17 +307,17 @@ try:
         fn.__globals__["mdown"] = mouse_down
         fn.__globals__["mtime"] = mouse_press_t
 
-        if frame_count % POLL_EVERY == 0:
+        if frame_count % POLL_EVERY == 0: # every 3rd frame
             # reload shader on file change
             try:
-                mt = os.path.getmtime(SHADER)
-                if mt != mtime:
-                    mtime = mt
+                mt = os.path.getmtime(SHADER) #current last modified time of file
+                if mt != mtime: #has the file changed since last snapshot
+                    mtime = mt #store new tie
                     try:
-                        fn  = load(SHADER)
+                        fn  = load(SHADER) #relead and recompile shader
                         err = None
                     except Exception as e:
-                        err = str(e)
+                        err = str(e) #syntax error go back to old fn
             except Exception:
                 pass
 
