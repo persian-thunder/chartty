@@ -140,10 +140,36 @@ EXAMPLES = [
                           "v += math.sin(y / 3.0 + math.sin(x / 4.0 - t))",
                           "fr = math.hypot(x - mx, y - my)",
                           "v += math.sin(fr * 0.7 - t * 6.0) * math.exp(-fr * 0.08) if mdown else 0.0"]),
+    ("pi-preset-1",      ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
+                          "a = math.atan2(cy, cx)",
+                          "v = math.sin(r / 4.0 - t * 5.0) * math.sin(a * 7.0 + t * 1.5)",
+                          "v += 0.5 * math.sin(r / 2.0 - t * 3.0) * math.sin(a * 13.0 - t * 0.7)",
+                          "v = v * 0.5 + 0.5",
+                          "c = math.sin(a * 3.0 + r / 4.0 - t * 2.0) * 0.5 + 0.5",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "v += math.sin(fr * 0.7 - t * 16.0) * math.exp(-fr * 0.168) if mdown else 0.0",
+                          "v += math.sin(y / 3.0 + math.sin(y / 4.0 + t))"]),
+    ("pi-preset-2",      ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "r = math.sqrt((cx * 0.55) * (cx * 0.55) + cy * cy) + 0.001",
+                          "a = math.atan2(cy, cx)",
+                          "v = math.sin(r / 4.0 - t * 5.0) * math.sin(a * 117.0 + t * 11.5)",
+                          "v += 0.5 * math.sin(r / 1.0 - t * 3.0) * math.sin(a * 13.0 - t * 0.7)",
+                          "v = v * 0.5 + 0.5",
+                          "c = math.sin(a * 3.0 + r / 14.0 - t * 2.0) * 0.5 + 0.5",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "v += math.sin(fr * 0.7 - t * .01) * math.exp(-fr * .058) if mdown else 0.0",
+                          "v += math.sin(y / 3.0 + math.sin(y / 13.0 + (2 * t)))"]),
 ]
 
 ###preset examples
-SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5}
+SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5, "pi-preset-1": 6, "pi-preset-2": 7}
 
 ###default animation = acid grid grid
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
