@@ -166,10 +166,20 @@ EXAMPLES = [
                           "fr = math.hypot(x - mx, y - my)",
                           "v += math.sin(fr * 0.7 - t * .01) * math.exp(-fr * .058) if mdown else 0.0",
                           "v += math.sin(y / 3.0 + math.sin(y / 13.0 + (2 * t)))"]),
+    ("pi-preset-3",      ["ox = mx if mdown else cols / 2.0",
+                          "oy = my if mdown else rows / 2.0",
+                          "cx = x - ox",
+                          "cy = y - oy",
+                          "r = math.sqrt(cx*cx + cy*cy) + 0.001",
+                          "fr = math.hypot(x - mx, y - my)",
+                          "pull = math.exp(-fr * 0.08) if mdown else 0.0",
+                          "warp = 6.0 * pull * math.sin(fr * 0.7 - t * 14.0)",
+                          "v = math.sin(10.0 / r - t * 4.0 + warp) * math.sin(math.atan2(cy, cx) * 3.0)",
+                          "v = v * 0.5 + 0.5"]),
 ]
 
 ###preset examples
-SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5, "pi-preset-1": 6, "pi-preset-2": 7}
+SHORTCUTS = {"wormhole": 0, "acid": 1, "spiral": 2, "tunnel": 3, "ripple": 4, "groove": 5, "pi-preset-1": 6, "pi-preset-2": 7, "pi-preset-3": 8}
 
 ###default animation = acid grid grid
 lines = ["v = math.sin(x / 3.0 + math.sin(y / 4.0 + t))",
