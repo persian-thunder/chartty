@@ -86,6 +86,7 @@ _ANSI16 = [
     ("\033[97m", (255, 255, 255)),  # white
 ]
 
+# round to nearest in 16-color set
 def _nearest_ansi(r, g, b):
     best_esc, best_d = _ANSI16[0][0], float("inf")
     for esc, (ar, ag, ab) in _ANSI16:
@@ -139,13 +140,13 @@ DEFAULT = """def value(x, y, t, cols, rows):
 
 def load(path):
     if not os.path.exists(path):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True)  # make folder if missing
         with open(path, "w") as f:
-            f.write(DEFAULT)
+            f.write(DEFAULT)  # write the default shader
     ns = {"math": _math_np}
     with open(path) as f:
         exec(compile(f.read(), path, "exec"), ns)
-    return ns["value"]
+    return ns["value"]  # render() calls this
 
 # N_COLORS must match the number of distinct colour values the lut can produce
 # Terminal: 16, all else: 32
@@ -221,6 +222,7 @@ def render(fn, t, cols, rows):
     return HOME + (RESET + "\n").join(rows_out) + RESET
 
 ######### init
+# on first boot calls load(SHADER); the render loop below calls fn(...) every frame
 fn       = load(SHADER)
 mtime    = os.path.getmtime(SHADER)
 chars_mtime = 0
