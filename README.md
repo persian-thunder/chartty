@@ -57,7 +57,7 @@ chars kawaii    switch character set
 
 **Edit mode**
 
-`edit` opens a live-editor session over the current shader. Type to mutate and every keystroke will compile and update the canvas in real-time
+`edit` opens a live-editor session over the current shader, type to mutate in real-time
 
 - `^S` - save & exit
 - `^C` - cancel and revert to pre-edit sahder
@@ -69,7 +69,7 @@ chars kawaii    switch character set
 
 ## Layout ⊟⊞
 
-`chartty` runs inside a tmux session with two panes: the renderer and the REPL. Default layout = horizontal
+`chartty` runs inside a tmux session with two panes, renderer + REPL
 
 Type `layout` in the REPL to flip between:
 
