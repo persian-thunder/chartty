@@ -52,7 +52,7 @@ _BUDGET_BPS = (
 )
 
 # Synchronized Update Protocol (BSU/ESU, ?2026)
-# tells the terminal: buffer this frame, render it atomically — eliminates tearing
+# tells terminal buffer frame, prevent tearing
 if _USE_SYNC:
     if _IN_TMUX:
         BSU = "\033Ptmux;\033\033[?2026h\033\\"
@@ -104,8 +104,8 @@ signal.signal(signal.SIGTERM, restore)
 
 def _rgb_to_8bit(r, g, b):
     """Map 24-bit RGB to the nearest xterm-256 colour index."""
-    # Near-grays route to the grayscale ramp (232-255) instead of the cube,
-    # since some terminal themes (e.g. Catppuccin) repaint cube origin 16 as a non-black colour.
+    # near-grays route to the grayscale ramp (232-255) instead of the cube,
+    # since some terminal themes repaint cube origin 16 as a non-black color
     if abs(r - g) < 12 and abs(g - b) < 12 and abs(r - b) < 12:
         avg = (r + g + b) // 3
         return 232 + min(23, max(0, (avg - 8) // 10))
@@ -196,10 +196,9 @@ def render(fn, t, cols, rows):
                 except Exception:
                     pass
 
-    # ── delta-encoded output: emit color escape only on color transitions ──
-    # Precompute full char grid with numpy (one vectorised index, no per-cell Python).
-    # Python loop runs only over color-change boundaries — far fewer iterations
-    # than cells, especially with quantised colors creating multi-cell runs.
+    # delta-encode output: emit color escape only on color transitions
+    # precompute full char grid with numpy (not per-cell Python)
+    # only loops on color-change boundaries, makes it fast as fuck boi
     vi_chars = _chars_arr[vi]   # (rows, cols) array of single-char strings
     rows_out = []
     for y in range(rows):
