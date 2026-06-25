@@ -73,8 +73,8 @@ chars kawaii    switch character set
 
 Type `layout` in the REPL to flip between:
 
-- **horizontal** — renderer left, editor right
-- **vertical**   — renderer top, editor bottom
+- **horizontal** 
+- **vertical** 
 
 
 
