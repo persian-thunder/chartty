@@ -1,6 +1,6 @@
 # chartty (𖦹﹏𖦹;)
 
-Live-code ASCII renderer in your terminal. Trigonomatry is your best friend (｡•̀ᴗ-)✧ 
+Live-code ASCII renderer in your terminal. Trigonometry is your best friend (｡•̀ᴗ-)✧ 
 
 ```
 v = math.sin(math.sqrt(cx*cx + cy*cy) / 2.0 - t * 3.0)
@@ -60,7 +60,7 @@ chars kawaii    switch character set
 `edit` opens a live-editor session over the current shader, type to mutate in real-time
 
 - `^S` - save & exit
-- `^C` - cancel and revert to pre-edit sahder
+- `^C` - cancel and revert to per-edit sahder
 - `enter` - newline
 
 **Palettes:** `rainbow` `fire` `plasma` `green` `gold` `fiesta` `mono` `acid` `acid2` `toxic` `lava` `electricity`
