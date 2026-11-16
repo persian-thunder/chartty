@@ -21,7 +21,7 @@ bash install/install.sh
 
 `chartty` opens two panes: left is renderer, right is live-code-editor
 
-Type trig functions, press enter, generate textures rendered with ASCII chars :3
+Type trig functions to generate textures rendered with ASCII chars :3
 
 
 | Variable | Usage |
