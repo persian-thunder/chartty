@@ -357,7 +357,7 @@ repl_session = PromptSession()
 ###### REPL LOOP ######
 while True:
     try:
-        raw = input(ANSI(f"\n{GREEN}>{RESET} ")).strip()
+        raw = repl_session.prompt(ANSI(f"\n{GREEN}>{RESET} ")).strip()
     except KeyboardInterrupt:
         continue
     except EOFError:
