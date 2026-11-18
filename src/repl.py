@@ -1,7 +1,9 @@
-import os, re, readline, subprocess
+import os, re, subprocess
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from palette import NAMES as PALETTES
+from prompt_toolkit.formatted_text import ANSI
+
 
 _SRC       = os.path.dirname(os.path.abspath(__file__))
 _CONFIG    = os.path.join(_SRC, "..", "config")
@@ -348,11 +350,17 @@ print(f"  {DIM}layout   = toggle horiz/vert split{RESET}")
 print()
 show()
 
+
+repl_session = PromptSession()
+
+
 ###### REPL LOOP ######
 while True:
     try:
-        raw = input(f"\n{GREEN}>{RESET} ").strip()
-    except (EOFError, KeyboardInterrupt):
+        raw = input(ANSI(f"\n{GREEN}>{RESET} ")).strip()
+    except KeyboardInterrupt:
+        continue
+    except EOFError:
         print()
         break
 
